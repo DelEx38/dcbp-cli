@@ -47,13 +47,13 @@ DCBP cree une **memoire persistante** via des fichiers Markdown que Claude lit a
 ### Depuis GitHub
 
 ```bash
-pip install git+https://github.com/YOUR_USERNAME/dcbp-cli.git
+pip install git+https://github.com/DelEx38/dcbp-cli.git
 ```
 
 ### En developpement local
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/dcbp-cli.git
+git clone https://github.com/DelEx38/dcbp-cli.git
 cd dcbp-cli
 pip install -e .
 ```
@@ -480,7 +480,7 @@ Utilisez DECISIONS.md pour :
 Quand une nouvelle version de DCBP sort :
 
 ```bash
-pip install --upgrade git+https://github.com/YOUR_USERNAME/dcbp-cli.git
+pip install --upgrade git+https://github.com/DelEx38/dcbp-cli.git
 cd mon-projet
 dcbp update
 ```

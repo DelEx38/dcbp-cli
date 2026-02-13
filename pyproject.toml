@@ -31,8 +31,8 @@ classifiers = [
 dcbp = "dcbp_cli.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/YOUR_USERNAME/dcbp-cli"
-Repository = "https://github.com/YOUR_USERNAME/dcbp-cli"
+Homepage = "https://github.com/DelEx38/dcbp-cli"
+Repository = "https://github.com/DelEx38/dcbp-cli"
 
 [tool.hatch.build.targets.sdist]
 include = [
