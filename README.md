@@ -14,6 +14,7 @@ DCBP resout un probleme fondamental de Claude Code : **la perte de contexte entr
 - [Structure des fichiers](#structure-des-fichiers)
 - [Fichiers de memoire](#fichiers-de-memoire)
 - [Skills disponibles](#skills-disponibles)
+- [Workflow /create en detail](#workflow-create-en-detail)
 - [Workflow /dev en detail](#workflow-dev-en-detail)
 - [Flags et options](#flags-et-options)
 - [Bonnes pratiques](#bonnes-pratiques)
@@ -88,7 +89,22 @@ Output :
 ==================================================
 ```
 
-### 2. Configurer votre projet
+### 2. Creer ou configurer votre projet
+
+**Option A : Utiliser /create (recommande pour nouveaux projets)**
+
+Dans Claude Code, lancez :
+```
+/create
+```
+
+Claude vous demandera :
+- Le type de projet (Python ou Django)
+- Le nom du projet
+
+Il creera automatiquement la structure et configurera PROJECT.md.
+
+**Option B : Configuration manuelle (projet existant)**
 
 Editez `.dcbp/PROJECT.md` avec les informations de votre projet :
 
@@ -142,6 +158,12 @@ mon-projet/
     ├── DECISIONS.md             # Decisions architecturales
     ├── output/                  # Fichiers generes (optionnel)
     ├── skills/
+    │   ├── create/
+    │   │   ├── SKILL.md         # Definition du skill /create
+    │   │   └── steps/
+    │   │       ├── step-00-init.md
+    │   │       ├── step-01-scaffold.md
+    │   │       └── step-02-complete.md
     │   └── dev/
     │       ├── SKILL.md         # Definition du skill /dev
     │       └── steps/
@@ -288,6 +310,7 @@ FastAPI
 
 | Commande | Description | Quand l'utiliser |
 |----------|-------------|------------------|
+| `/create [python\|django]` | Creation de projet Python ou Django | Apres dcbp init, dossier vide |
 | `/dev <feature>` | Developpement structure en 7 etapes | Nouvelle fonctionnalite |
 | `/debug <bug>` | Investigation et correction | Bug a resoudre |
 | `/review <cible>` | Revue de code | Avant merge/commit |
@@ -296,6 +319,10 @@ FastAPI
 ### Exemples d'utilisation
 
 ```
+/create                    # Demande interactivement Python ou Django
+/create python             # Cree un projet Python basique
+/create django             # Cree un projet Django
+
 /dev ajouter un systeme de notifications par email
 /dev -a implementer le CRUD pour les produits
 /dev -r DEV-005 reprendre la tache en cours
@@ -307,6 +334,98 @@ FastAPI
 /review les derniers commits
 
 /status
+```
+
+---
+
+## Workflow /create en detail
+
+Le skill `/create` permet de creer un nouveau projet Python ou Django apres avoir initialise DCBP.
+
+### Quand l'utiliser
+
+- Apres `dcbp init` dans un dossier vide
+- Pour demarrer un nouveau projet avec une structure propre
+- Pour configurer automatiquement PROJECT.md
+
+### Types de projets
+
+| Type | Description | Structure |
+|------|-------------|-----------|
+| `python` | Projet Python basique (script, CLI, lib) | src/, tests/, pyproject.toml |
+| `django` | Application web Django | manage.py, apps/, templates/, static/ |
+
+### Workflow en 3 phases
+
+#### Phase 0 : Init
+- Demande le type de projet (si non specifie)
+- Demande le nom du projet
+- Determine l'emplacement de creation
+
+#### Phase 1 : Scaffold
+- Cree la structure de fichiers appropriee
+- Configure les outils (pytest, ruff)
+- Genere les fichiers de base (requirements.txt, .gitignore, README.md)
+
+#### Phase 2 : Complete
+- Met a jour PROJECT.md avec la stack du projet
+- Ajoute une entree dans PROGRESS.md
+- Affiche les prochaines etapes
+
+### Structure creee
+
+#### Python basique
+
+```
+mon-projet/
+├── src/
+│   └── mon_projet/
+│       ├── __init__.py
+│       └── main.py
+├── tests/
+│   └── __init__.py
+├── pyproject.toml
+├── requirements.txt
+├── requirements-dev.txt
+├── .gitignore
+└── README.md
+```
+
+#### Django
+
+```
+mon-projet/
+├── mon_projet/
+│   ├── __init__.py
+│   ├── settings.py
+│   ├── urls.py
+│   ├── wsgi.py
+│   └── asgi.py
+├── apps/
+├── templates/
+│   └── base.html
+├── static/
+├── manage.py
+├── requirements.txt
+├── requirements-dev.txt
+├── .gitignore
+├── .env.example
+└── README.md
+```
+
+### Exemples
+
+```bash
+# Interactif : demande le type et le nom
+/create
+
+# Direct : cree un projet Python nomme "mon-cli"
+/create python
+# > Nom du projet : mon-cli
+
+# Direct : cree un projet Django
+/create django
+# > Nom du projet : mon-app-web
 ```
 
 ---

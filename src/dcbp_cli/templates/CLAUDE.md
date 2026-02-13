@@ -14,6 +14,7 @@ Ce projet utilise **DCBP**. Au début de chaque session :
 
 | Commande | Description |
 |----------|-------------|
+| `/create [python\|django]` | Créer un nouveau projet Python ou Django |
 | `/dev <feature>` | Développement structuré (Analyze → Plan → Execute → Verify) |
 | `/debug <bug>` | Investigation et correction de bugs |
 | `/review <cible>` | Revue de code |
@@ -40,3 +41,4 @@ Ce projet utilise **DCBP**. Au début de chaque session :
 2. **Suivre les workflows** définis dans les skills
 3. **Documenter les décisions** importantes dans DECISIONS.md
 4. **Respecter les conventions** définies dans PROJECT.md
+5. **Ne pas ajouter "Co-Authored-By"** dans les messages de commit
