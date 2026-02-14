@@ -6,6 +6,8 @@ argument-hint: "[-a] [-s] [-r <task-id>] <description de la feature>"
 
 # /dev - Workflow de Développement DCBP
 
+> 🛑 **Rappel** : Faire uniquement ce qui est demandé. Suggérer les améliorations, ne pas les implémenter sans accord.
+
 Workflow structuré pour implémenter des fonctionnalités de manière méthodique avec mémoire persistante.
 
 ## Commande

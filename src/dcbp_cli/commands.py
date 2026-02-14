@@ -59,6 +59,18 @@ def init_project(project_path: Path, force: bool = False) -> bool:
         shutil.copytree(dcbp_template, dcbp_path)
         print("[+] Cree .dcbp/")
 
+        # Lister les composants crees
+        if (dcbp_path / "skills").exists():
+            skills = [d.name for d in (dcbp_path / "skills").iterdir() if d.is_dir()]
+            if skills:
+                print(f"    [+] Skills: {', '.join(skills)}")
+
+        if (dcbp_path / "scripts").exists():
+            print("    [+] Scripts utilitaires")
+
+        if (dcbp_path / "output").exists():
+            print("    [+] Dossier output/")
+
     # Copier CLAUDE.md
     claude_template = templates_path / "CLAUDE.md"
     if claude_template.exists():

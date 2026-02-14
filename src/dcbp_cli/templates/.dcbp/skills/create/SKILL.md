@@ -6,6 +6,8 @@ argument-hint: "[python|django]"
 
 # /create - Création de Projet Python/Django
 
+> 🛑 **Rappel** : Faire uniquement ce qui est demandé. Suggérer les améliorations, ne pas les implémenter sans accord.
+
 Workflow pour créer un nouveau projet Python ou Django avec une structure minimale et fonctionnelle.
 
 ## Commande

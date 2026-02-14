@@ -37,6 +37,33 @@ Ce projet utilise **DCBP**. Au début de chaque session :
 
 ## Règles
 
+### Règle fondamentale : Focus sur la tâche
+
+🛑 **FAIRE uniquement ce qui est demandé** - Pas d'initiatives non sollicitées.
+
+| Action | Autorisé |
+|--------|----------|
+| Exécuter la tâche demandée | ✅ Obligatoire |
+| Faire des actions non demandées | ❌ Interdit |
+| Suggérer des améliorations | ✅ Autorisé (sans les implémenter) |
+
+**Exemple :**
+```
+Demande : "Corrige le bug dans auth.py"
+
+✅ Correct :
+   1. Corriger le bug
+   2. Suggérer : "Je remarque que X pourrait être amélioré.
+      Voulez-vous que je le fasse ?"
+
+❌ Incorrect :
+   1. Corriger le bug
+   2. Refactorer le code (non demandé)
+   3. Ajouter des tests (non demandé)
+```
+
+### Autres règles
+
 1. **Toujours mettre à jour la mémoire** après chaque session
 2. **Suivre les workflows** définis dans les skills
 3. **Documenter les décisions** importantes dans DECISIONS.md
