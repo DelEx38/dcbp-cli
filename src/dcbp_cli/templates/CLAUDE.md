@@ -2,13 +2,42 @@
 
 > Système de mémoire persistante et workflows structurés pour Claude Code.
 
-## Activation
+## Workflow de Session (TOUJOURS SUIVRE)
 
-Ce projet utilise **DCBP**. Au début de chaque session :
+### 🟢 Début de session
 
-1. Lis `.dcbp/PROJECT.md` pour le contexte
-2. Lis `.dcbp/PROGRESS.md` pour l'historique récent
-3. Utilise les skills disponibles selon la tâche
+1. **Lire le contexte** (obligatoire) :
+   - `.dcbp/PROJECT.md` → Stack, conventions, architecture
+   - `.dcbp/PROGRESS.md` → Dernières sessions (2-3 dernières)
+
+2. **Comprendre la demande** avant d'agir
+
+### 🟡 Pendant la session
+
+3. **Appliquer la règle de focus** (voir ci-dessous)
+4. **Utiliser les skills** si approprié (`/dev`, `/debug`, `/review`, `/status`)
+5. **Documenter les décisions importantes** dans `DECISIONS.md`
+
+### 🔴 Fin de session
+
+6. **Mettre à jour la mémoire** :
+   ```markdown
+   ## [{date}] {Titre court de la session}
+
+   ### Ce qui a été fait
+   - [x] Action 1
+   - [x] Action 2
+
+   ### Fichiers modifiés
+   - `fichier1.py` - {description}
+
+   ### Suggestions non implémentées
+   - {suggestion 1}
+
+   → **Prochaines étapes** : {next steps}
+   ```
+
+7. **Mettre à jour TASKS.md** si des tâches ont été complétées ou créées
 
 ## Skills Disponibles
 
