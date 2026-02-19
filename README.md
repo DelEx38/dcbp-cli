@@ -16,6 +16,8 @@ DCBP resout un probleme fondamental de Claude Code : **la perte de contexte entr
 - [Skills disponibles](#skills-disponibles)
 - [Workflow /create en detail](#workflow-create-en-detail)
 - [Workflow /dev en detail](#workflow-dev-en-detail)
+- [Workflow /start en detail](#workflow-start-en-detail)
+- [Workflow /archive en detail](#workflow-archive-en-detail)
 - [Flags et options](#flags-et-options)
 - [Bonnes pratiques](#bonnes-pratiques)
 - [Mise a jour](#mise-a-jour)
@@ -77,36 +79,65 @@ cd mon-projet
 dcbp init
 ```
 
-Output :
+L'assistant vous posera quelques questions :
+
 ```
-[*] Initialisation de DCBP v0.1.0 dans /path/to/mon-projet
+============================================================
+  DCBP v0.1.0 - Initialisation du projet
+============================================================
 
-[+] Cree .dcbp/
-[+] Cree CLAUDE.md
+Repondez aux questions suivantes pour configurer votre projet.
+(Appuyez sur Entree pour accepter la valeur par defaut)
 
-==================================================
-[OK] DCBP initialise avec succes!
-==================================================
+Nom du projet [mon-projet]:
+Description courte [Un projet genial]: Mon application web
+
+Langage principal ?
+  1. Python
+  2. JavaScript/TypeScript
+  3. Go
+  4. Rust
+  5. Autre
+Choix [1]: 1
+
+Framework Python ?
+  1. FastAPI
+  2. Django
+  3. Flask
+  4. CLI (Click/Typer)
+  5. Script simple
+  6. Autre
+Choix [1]: 1
+
+Base de donnees ?
+  1. PostgreSQL
+  2. MySQL
+  3. SQLite
+  4. MongoDB
+  5. Redis
+  6. Aucune
+  7. Autre
+Choix [6]: 1
+
+============================================================
+  [OK] DCBP initialise avec succes!
+============================================================
+
+  Projet    : mon-projet
+  Langage   : Python
+  Framework : FastAPI
+  Database  : PostgreSQL
 ```
 
-### 2. Creer ou configurer votre projet
+### Mode rapide (sans questions)
 
-**Option A : Utiliser /create (recommande pour nouveaux projets)**
-
-Dans Claude Code, lancez :
-```
-/create
+```bash
+dcbp init --quick   # Utilise les templates par defaut
 ```
 
-Claude vous demandera :
-- Le type de projet (Python ou Django)
-- Le nom du projet
+### 2. Configuration manuelle (optionnel)
 
-Il creera automatiquement la structure et configurera PROJECT.md.
-
-**Option B : Configuration manuelle (projet existant)**
-
-Editez `.dcbp/PROJECT.md` avec les informations de votre projet :
+Si vous voulez ajuster la configuration, editez `.dcbp/PROJECT.md` :
 
 ```markdown
 # Mon Projet
@@ -156,6 +187,7 @@ mon-projet/
     ├── TASKS.md                 # Backlog et taches
     ├── ISSUES.md                # Bugs et dette technique
     ├── DECISIONS.md             # Decisions architecturales
+    ├── archive/                 # Sessions archivees (via /archive)
     ├── output/                  # Fichiers generes (optionnel)
     ├── skills/
     │   ├── create/
@@ -310,15 +342,19 @@ FastAPI
 
 | Commande | Description | Quand l'utiliser |
 |----------|-------------|------------------|
-| `/create [python\|django]` | Creation de projet Python ou Django | Apres dcbp init, dossier vide |
+| `/start` | Initialisation de session complete | Debut de chaque session |
 | `/dev <feature>` | Developpement structure en 7 etapes | Nouvelle fonctionnalite |
 | `/debug <bug>` | Investigation et correction | Bug a resoudre |
 | `/review <cible>` | Revue de code | Avant merge/commit |
-| `/status` | Vue d'ensemble du projet | Debut de session |
+| `/status` | Vue d'ensemble du projet | Vue rapide de l'etat |
+| `/archive [n]` | Archivage de PROGRESS.md | Quand PROGRESS.md > 10KB |
+| `/create [python\|django]` | Scaffold de code (optionnel) | Creer la structure de fichiers |
 
 ### Exemples d'utilisation
 
 ```
+/start                     # Initialise la session (contexte + taches + suggestions)
+
 /create                    # Demande interactivement Python ou Django
 /create python             # Cree un projet Python basique
 /create django             # Cree un projet Django
@@ -333,7 +369,10 @@ FastAPI
 /review src/services/payment.py
 /review les derniers commits
 
-/status
+/status                    # Vue d'ensemble rapide
+
+/archive                   # Archive PROGRESS.md (garde 5 sessions)
+/archive 3                 # Garde seulement les 3 dernieres sessions
 ```
 
 ---
@@ -519,6 +558,89 @@ Le skill `/dev` suit une methodologie en **7 phases** inspiree d'APEX :
 
 ---
 
+## Workflow /start en detail
+
+Le skill `/start` initialise une session de travail avec tout le contexte necessaire.
+
+### Ce que fait /start
+
+1. **Charge la memoire complete** - PROJECT, PROGRESS, TASKS, ISSUES, DECISIONS
+2. **Resume la derniere session** - Ce qui a ete fait, prochaines etapes
+3. **Affiche les taches actives** - En cours et prioritaires
+4. **Liste les issues ouvertes** - Bugs et dette technique
+5. **Suggere des actions** - 3 actions concretes basees sur le contexte
+
+### Exemple de sortie
+
+```
+╔════════════════════════════════════════════════════════════╗
+║  SESSION DCBP INITIALISEE                                  ║
+╚════════════════════════════════════════════════════════════╝
+
+## Projet : Mon App
+
+**Stack** : Python 3.11, FastAPI, PostgreSQL
+
+## Derniere session
+
+**[2026-02-18]** - Ajout authentification JWT
+- Implementation du login/logout
+- Tests unitaires
+
+→ Prochaines etapes : Ajouter refresh tokens
+
+## Taches
+
+### En cours [~]
+- [~] Refresh tokens
+
+### A faire (priorite haute)
+- [ ] Reset password
+
+## Suggestions pour cette session
+
+1. **Continuer refresh tokens** - Tache en cours
+2. **Corriger BUG-003** - Bug critique ouvert
+3. **Implementer reset password** - Priorite haute
+```
+
+---
+
+## Workflow /archive en detail
+
+Le skill `/archive` archive les anciennes sessions de PROGRESS.md pour economiser des tokens.
+
+### Pourquoi archiver ?
+
+PROGRESS.md grandit avec le temps. Apres 20 sessions, il peut atteindre 15-20 KB (~5000 tokens), ce qui consomme une part significative de votre quota.
+
+### Commandes
+
+```
+/archive        # Garde les 5 dernieres sessions (defaut)
+/archive 3      # Garde les 3 dernieres sessions
+/archive 10     # Garde les 10 dernieres sessions
+```
+
+### Structure des archives
+
+```
+.dcbp/
+├── PROGRESS.md              # Sessions recentes (5 dernieres)
+└── archive/
+    ├── PROGRESS-2026-01.md  # Archive janvier
+    ├── PROGRESS-2026-02.md  # Archive fevrier
+    └── ...
+```
+
+### Quand archiver ?
+
+- Quand PROGRESS.md depasse 10 KB
+- Periodiquement (1x par mois)
+- Avant une longue session pour maximiser les tokens disponibles
+
+---
+
 ## Flags et options
 
 ### Flags communs
@@ -554,12 +676,13 @@ En mode autonome, Claude :
 
 ## Bonnes pratiques
 
-### 1. Toujours commencer par /status
+### 1. Toujours commencer par /start
 
-Au debut de chaque session, lancez `/status` pour que Claude :
-- Lise le contexte du projet
-- Voie l'historique recent
-- Identifie les taches en cours
+Au debut de chaque session, lancez `/start` pour que Claude :
+- Charge tout le contexte (PROJECT, PROGRESS, TASKS, ISSUES, DECISIONS)
+- Affiche la derniere session et les prochaines etapes
+- Liste les taches en cours et prioritaires
+- Suggere des actions concretes pour la session
 
 ### 2. Maintenir PROJECT.md a jour
 
@@ -631,22 +754,46 @@ Les steps du workflow `/dev` sont charges **un par un**, pas tous en meme temps.
 
 | Composant | Tokens (approx) |
 |-----------|-----------------|
-| CLAUDE.md | ~200 |
-| PROJECT.md (rempli) | ~300 |
-| PROGRESS.md (3 sessions) | ~250 |
-| TASKS.md | ~100 |
-| Skill /dev (1 step) | ~400 |
-| **Memoire de base** | **~850** |
-| **Workflow /dev complet** | **~6,600** |
+| CLAUDE.md | ~820 |
+| PROJECT.md | ~540 |
+| PROGRESS.md (5 sessions) | ~2000 |
+| TASKS.md | ~205 |
+| ISSUES.md | ~200 |
+| DECISIONS.md | ~390 |
+| **Memoire complete** | **~4150** |
 
-### Pourcentage du context window
+### Cout par action
 
-| Modele | Context | Usage DCBP |
-|--------|---------|------------|
-| Claude 3.5 Sonnet | 200K | ~3.3% |
-| Claude 3 Opus | 200K | ~3.3% |
+| Action | Tokens (input) |
+|--------|----------------|
+| `/start` (lit tout) | ~5700 |
+| `/status` (vue rapide) | ~3000 |
+| `/dev` (1 step) | ~1500-2000 |
+| `/archive` | ~500 |
 
-DCBP utilise moins de **4%** du context window, laissant 96% pour votre code et vos conversations.
+### Limites par abonnement (Claude)
+
+| Plan | Tokens/fenetre | Reset |
+|------|----------------|-------|
+| Pro | ~44,000 | 5h |
+| Max5 | ~88,000 | 5h |
+| Max20 | ~220,000 | 5h |
+
+### Impact sur votre quota
+
+Avec un abonnement **Pro** (44K tokens/5h) :
+- `/start` consomme ~13% du quota
+- Une session complete (3-4 echanges) : ~35-45%
+- Vous pouvez faire 2-3 sessions confortables par fenetre
+
+### Optimisation : /archive
+
+Utilisez `/archive` regulierement pour reduire la taille de PROGRESS.md :
+
+| PROGRESS.md | Tokens | Apres /archive |
+|-------------|--------|----------------|
+| 20 sessions (~15 KB) | ~4300 | ~2000 (5 sessions) |
+| **Economie** | | **~2300 tokens** |
 
 ---
 

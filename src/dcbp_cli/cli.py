@@ -3,7 +3,7 @@
 DCBP CLI - Point d'entrée principal.
 
 Usage:
-    dcbp init [--force]
+    dcbp init [--force] [--quick]
     dcbp update
     dcbp --version
     dcbp --help
@@ -25,7 +25,8 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Exemples:
-  dcbp init          Initialise DCBP dans le projet courant
+  dcbp init          Initialise DCBP avec questions interactives
+  dcbp init --quick  Initialise sans questions (templates par défaut)
   dcbp init --force  Réinitialise (écrase les fichiers existants)
   dcbp update        Met à jour les templates vers la dernière version
         """
@@ -48,6 +49,11 @@ Exemples:
         "--force", "-f",
         action="store_true",
         help="Écrase les fichiers existants"
+    )
+    init_parser.add_argument(
+        "--quick", "-q",
+        action="store_true",
+        help="Mode rapide sans questions (utilise les templates par défaut)"
     )
     init_parser.add_argument(
         "--path", "-p",
@@ -75,7 +81,11 @@ Exemples:
         sys.exit(0)
 
     if args.command == "init":
-        success = init_project(Path(args.path), force=args.force)
+        success = init_project(
+            Path(args.path),
+            force=args.force,
+            skip_questions=args.quick
+        )
         sys.exit(0 if success else 1)
 
     elif args.command == "update":

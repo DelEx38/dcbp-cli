@@ -6,9 +6,105 @@ import shutil
 import sys
 from pathlib import Path
 from importlib import resources
+from datetime import date
 
 from . import __version__
 
+
+# =============================================================================
+# Configuration des choix
+# =============================================================================
+
+LANGUAGES = {
+    "1": {"name": "Python", "key": "python"},
+    "2": {"name": "JavaScript/TypeScript", "key": "javascript"},
+    "3": {"name": "Go", "key": "go"},
+    "4": {"name": "Rust", "key": "rust"},
+    "5": {"name": "Autre", "key": "other"},
+}
+
+FRAMEWORKS = {
+    "python": {
+        "1": "FastAPI",
+        "2": "Django",
+        "3": "Flask",
+        "4": "CLI (Click/Typer)",
+        "5": "Script simple",
+        "6": "Autre",
+    },
+    "javascript": {
+        "1": "React",
+        "2": "Next.js",
+        "3": "Vue.js",
+        "4": "Node.js (Express)",
+        "5": "Autre",
+    },
+    "go": {
+        "1": "Gin",
+        "2": "Echo",
+        "3": "Fiber",
+        "4": "CLI (Cobra)",
+        "5": "Autre",
+    },
+    "rust": {
+        "1": "Actix-web",
+        "2": "Axum",
+        "3": "Rocket",
+        "4": "CLI (Clap)",
+        "5": "Autre",
+    },
+    "other": {
+        "1": "Aucun / Autre",
+    },
+}
+
+DATABASES = {
+    "1": "PostgreSQL",
+    "2": "MySQL",
+    "3": "SQLite",
+    "4": "MongoDB",
+    "5": "Redis",
+    "6": "Aucune",
+    "7": "Autre",
+}
+
+TOOLS = {
+    "python": {
+        "test": "pytest",
+        "lint": "ruff",
+        "format": "ruff format",
+        "typecheck": "mypy",
+    },
+    "javascript": {
+        "test": "jest / vitest",
+        "lint": "eslint",
+        "format": "prettier",
+        "typecheck": "tsc (si TypeScript)",
+    },
+    "go": {
+        "test": "go test",
+        "lint": "golangci-lint",
+        "format": "gofmt",
+        "typecheck": "(intégré)",
+    },
+    "rust": {
+        "test": "cargo test",
+        "lint": "clippy",
+        "format": "rustfmt",
+        "typecheck": "(intégré)",
+    },
+    "other": {
+        "test": "[À configurer]",
+        "lint": "[À configurer]",
+        "format": "[À configurer]",
+        "typecheck": "[À configurer]",
+    },
+}
+
+
+# =============================================================================
+# Fonctions utilitaires
+# =============================================================================
 
 def get_templates_path() -> Path:
     """Retourne le chemin vers les templates inclus dans le package."""
@@ -21,13 +117,175 @@ def get_templates_path() -> Path:
         return Path(pkg_resources.resource_filename("dcbp_cli", "templates"))
 
 
-def init_project(project_path: Path, force: bool = False) -> bool:
+def ask_text(prompt: str, default: str = "") -> str:
+    """Demande une saisie texte."""
+    if default:
+        prompt = f"{prompt} [{default}]: "
+    else:
+        prompt = f"{prompt}: "
+
+    response = input(prompt).strip()
+    return response if response else default
+
+
+def ask_choice(prompt: str, choices: dict, default: str = "1") -> str:
+    """Demande un choix parmi plusieurs options."""
+    print(f"\n{prompt}")
+    for key, value in choices.items():
+        if isinstance(value, dict):
+            print(f"  {key}. {value['name']}")
+        else:
+            print(f"  {key}. {value}")
+
+    while True:
+        response = input(f"Choix [{default}]: ").strip()
+        if not response:
+            response = default
+        if response in choices:
+            return response
+        print(f"  [!] Choix invalide. Entrez un numero entre 1 et {len(choices)}")
+
+
+def generate_project_md(config: dict) -> str:
+    """Génère le contenu de PROJECT.md basé sur la configuration."""
+    tools = TOOLS.get(config["language_key"], TOOLS["other"])
+
+    content = f"""# {config['name']}
+
+> {config['description']}
+
+## Informations générales
+
+- **Nom** : {config['name']}
+- **Description** : {config['description']}
+- **Démarré le** : {date.today().isoformat()}
+
+## Stack technique
+
+### Langage
+- {config['language']}
+
+### Framework
+- {config['framework']}
+
+### Base de données
+- {config['database']}
+
+### Outils
+- **Tests** : {tools['test']}
+- **Linter** : {tools['lint']}
+- **Formatter** : {tools['format']}
+- **Type check** : {tools['typecheck']}
+
+## Architecture
+
+### Structure
+```
+{config['name'].lower().replace(' ', '_')}/
+├── src/
+├── tests/
+└── ...
+```
+
+### Patterns
+- [À compléter selon le projet]
+
+## Conventions
+
+### Nommage
+- Variables : `snake_case`
+- Classes : `PascalCase`
+- Fichiers : `snake_case`
+
+### Style
+- Formatter : {tools['format']}
+- Linter : {tools['lint']}
+
+### Tests
+- Framework : {tools['test']}
+- Convention : `test_<fonction>_<scenario>`
+
+## Validation
+
+Commandes à exécuter pour valider le code :
+
+```bash
+# Lint
+{_get_lint_command(config['language_key'], tools)}
+
+# Type check
+{_get_typecheck_command(config['language_key'], tools)}
+
+# Tests
+{_get_test_command(config['language_key'], tools)}
+```
+
+## Points d'attention
+
+### À faire systématiquement
+- Écrire des tests pour les nouvelles fonctionnalités
+- Documenter les fonctions publiques
+- Vérifier les types avant de commit
+
+### À éviter
+- Commit de fichiers sensibles (.env, credentials)
+- Code dupliqué sans refactoring
+- Fonctions trop longues (> 50 lignes)
+
+### Zones sensibles
+- [À compléter selon le projet]
+"""
+    return content
+
+
+def _get_lint_command(lang_key: str, tools: dict) -> str:
+    """Retourne la commande de lint selon le langage."""
+    commands = {
+        "python": "ruff check .",
+        "javascript": "npm run lint",
+        "go": "golangci-lint run",
+        "rust": "cargo clippy",
+        "other": "# [À configurer]",
+    }
+    return commands.get(lang_key, commands["other"])
+
+
+def _get_typecheck_command(lang_key: str, tools: dict) -> str:
+    """Retourne la commande de type check selon le langage."""
+    commands = {
+        "python": "mypy src/",
+        "javascript": "npx tsc --noEmit",
+        "go": "# (intégré au compilateur)",
+        "rust": "# (intégré au compilateur)",
+        "other": "# [À configurer]",
+    }
+    return commands.get(lang_key, commands["other"])
+
+
+def _get_test_command(lang_key: str, tools: dict) -> str:
+    """Retourne la commande de test selon le langage."""
+    commands = {
+        "python": "pytest",
+        "javascript": "npm test",
+        "go": "go test ./...",
+        "rust": "cargo test",
+        "other": "# [À configurer]",
+    }
+    return commands.get(lang_key, commands["other"])
+
+
+# =============================================================================
+# Commandes principales
+# =============================================================================
+
+def init_project(project_path: Path, force: bool = False, skip_questions: bool = False) -> bool:
     """
     Initialise DCBP dans un projet.
 
     Args:
         project_path: Chemin du projet cible
         force: Si True, ecrase les fichiers existants
+        skip_questions: Si True, ne pose pas de questions (mode rapide)
 
     Returns:
         True si succes, False sinon
@@ -48,7 +306,55 @@ def init_project(project_path: Path, force: bool = False) -> bool:
         print(f"[X] Templates non trouves: {templates_path}")
         return False
 
-    print(f"[*] Initialisation de DCBP v{__version__} dans {project_path}")
+    print()
+    print("=" * 60)
+    print(f"  DCBP v{__version__} - Initialisation du projet")
+    print("=" * 60)
+    print()
+
+    # Configuration du projet
+    config = {}
+
+    if not skip_questions:
+        print("Repondez aux questions suivantes pour configurer votre projet.")
+        print("(Appuyez sur Entree pour accepter la valeur par defaut)")
+        print()
+
+        # Nom du projet
+        default_name = project_path.name
+        config["name"] = ask_text("Nom du projet", default_name)
+
+        # Description
+        config["description"] = ask_text("Description courte", "Un projet genial")
+
+        # Langage
+        lang_choice = ask_choice("Langage principal ?", LANGUAGES)
+        config["language"] = LANGUAGES[lang_choice]["name"]
+        config["language_key"] = LANGUAGES[lang_choice]["key"]
+
+        # Framework
+        frameworks = FRAMEWORKS.get(config["language_key"], FRAMEWORKS["other"])
+        framework_choice = ask_choice(f"Framework {config['language']} ?", frameworks)
+        config["framework"] = frameworks[framework_choice]
+
+        # Base de données
+        db_choice = ask_choice("Base de donnees ?", DATABASES, default="6")
+        config["database"] = DATABASES[db_choice]
+
+        print()
+    else:
+        # Mode rapide sans questions
+        config = {
+            "name": project_path.name,
+            "description": "Un projet DCBP",
+            "language": "[À configurer]",
+            "language_key": "other",
+            "framework": "[À configurer]",
+            "database": "[À configurer]",
+        }
+
+    # Copier les templates
+    print("[*] Creation de la structure DCBP...")
     print()
 
     # Copier le dossier .dcbp
@@ -63,13 +369,16 @@ def init_project(project_path: Path, force: bool = False) -> bool:
         if (dcbp_path / "skills").exists():
             skills = [d.name for d in (dcbp_path / "skills").iterdir() if d.is_dir()]
             if skills:
-                print(f"    [+] Skills: {', '.join(skills)}")
+                print(f"    [+] Skills: {', '.join(sorted(skills))}")
 
         if (dcbp_path / "scripts").exists():
             print("    [+] Scripts utilitaires")
 
         if (dcbp_path / "output").exists():
             print("    [+] Dossier output/")
+
+        if (dcbp_path / "archive").exists():
+            print("    [+] Dossier archive/")
 
     # Copier CLAUDE.md
     claude_template = templates_path / "CLAUDE.md"
@@ -80,22 +389,38 @@ def init_project(project_path: Path, force: bool = False) -> bool:
             shutil.copy2(claude_template, claude_md)
             print("[+] Cree CLAUDE.md")
 
+    # Générer PROJECT.md personnalisé
+    if not skip_questions:
+        project_md_content = generate_project_md(config)
+        project_md_path = dcbp_path / "PROJECT.md"
+        project_md_path.write_text(project_md_content, encoding="utf-8")
+        print("[+] Configure PROJECT.md")
+
     print()
-    print("=" * 50)
-    print("[OK] DCBP initialise avec succes!")
-    print("=" * 50)
+    print("=" * 60)
+    print("  [OK] DCBP initialise avec succes!")
+    print("=" * 60)
     print()
+
+    if not skip_questions:
+        print(f"  Projet    : {config['name']}")
+        print(f"  Langage   : {config['language']}")
+        print(f"  Framework : {config['framework']}")
+        print(f"  Database  : {config['database']}")
+        print()
+
     print("Prochaines etapes:")
-    print("  1. Utilisez /create pour creer un projet Python ou Django")
-    print("  2. Ou editez .dcbp/PROJECT.md manuellement")
-    print("  3. Puis utilisez /dev <feature> pour demarrer")
+    print("  1. Lancez Claude Code dans ce dossier")
+    print("  2. Utilisez /start pour initialiser votre session")
+    print("  3. Utilisez /dev <feature> pour developper")
     print()
     print("Skills disponibles:")
-    print("  /create [python|django] - Creer un nouveau projet")
+    print("  /start                  - Initialiser une session")
     print("  /dev <feature>          - Developpement structure")
     print("  /debug <bug>            - Investigation de bugs")
     print("  /review <cible>         - Revue de code")
     print("  /status                 - Vue d'ensemble du projet")
+    print("  /archive                - Archiver PROGRESS.md")
     print()
 
     return True
@@ -132,6 +457,7 @@ def update_templates(project_path: Path) -> bool:
         "ISSUES.md",
         "DECISIONS.md",
         "output",
+        "archive",
     ]
 
     # Mettre a jour les skills
@@ -153,6 +479,13 @@ def update_templates(project_path: Path) -> bool:
             shutil.rmtree(scripts_dst)
         shutil.copytree(scripts_src, scripts_dst)
         print("[+] Mis a jour scripts/")
+
+    # S'assurer que le dossier archive existe
+    archive_dst = dcbp_path / "archive"
+    if not archive_dst.exists():
+        archive_dst.mkdir()
+        (archive_dst / ".gitkeep").touch()
+        print("[+] Cree archive/")
 
     print()
     print("[OK] Templates mis a jour!")

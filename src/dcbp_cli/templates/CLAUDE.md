@@ -6,10 +6,7 @@
 
 ### 🟢 Début de session
 
-1. **Lire le contexte** (obligatoire) :
-   - `.dcbp/PROJECT.md` → Stack, conventions, architecture
-   - `.dcbp/PROGRESS.md` → Dernières sessions (2-3 dernières)
-
+1. **Utiliser `/start`** pour initialiser la session (ou lire manuellement le contexte)
 2. **Comprendre la demande** avant d'agir
 
 ### 🟡 Pendant la session
@@ -37,17 +34,22 @@
    → **Prochaines étapes** : {next steps}
    ```
 
-7. **Mettre à jour TASKS.md** si des tâches ont été complétées ou créées
+7. **Checklist de fin de session** :
+   - [ ] `TASKS.md` → Tâches complétées ou créées ?
+   - [ ] `DECISIONS.md` → Décisions architecturales prises ?
+   - [ ] `ISSUES.md` → Bugs découverts ou dette technique identifiée ?
 
 ## Skills Disponibles
 
 | Commande | Description |
 |----------|-------------|
+| `/start` | Initialiser une session (contexte + tâches + suggestions) |
 | `/create [python\|django]` | Créer un nouveau projet Python ou Django |
 | `/dev <feature>` | Développement structuré (Analyze → Plan → Execute → Verify) |
 | `/debug <bug>` | Investigation et correction de bugs |
 | `/review <cible>` | Revue de code |
 | `/status` | Vue d'ensemble du projet |
+| `/archive [n]` | Archiver PROGRESS.md (garde n sessions, défaut: 5) |
 
 ### Flags communs
 - `-a` : Mode autonome (pas de confirmations)
