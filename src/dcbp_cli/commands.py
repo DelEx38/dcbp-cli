@@ -400,6 +400,17 @@ def init_project(project_path: Path, force: bool = False, skip_questions: bool =
         if (dcbp_path / "archive").exists():
             print("    [+] Dossier archive/")
 
+    # Copier le dossier .skills (format natif Claude Code)
+    skills_template = templates_path / ".skills"
+    skills_path = project_path / ".skills"
+    if skills_template.exists():
+        if skills_path.exists() and force:
+            shutil.rmtree(skills_path)
+        if not skills_path.exists():
+            shutil.copytree(skills_template, skills_path)
+            skills_files = [f.stem for f in skills_path.glob("*.md")]
+            print(f"[+] Cree .skills/ ({', '.join(sorted(skills_files))})")
+
     # Copier CLAUDE.md
     claude_template = templates_path / "CLAUDE.md"
     if claude_template.exists():

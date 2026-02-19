@@ -1,0 +1,46 @@
+# Skill: /status
+
+> Vue d'ensemble rapide du projet.
+
+## Usage
+```
+/status
+```
+
+## Workflow
+
+### Phase 1: Collect
+1. Lire `.dcbp/PROJECT.md` - contexte général
+2. Lire `.dcbp/PROGRESS.md` - dernières sessions
+3. Lire `.dcbp/TASKS.md` - état du backlog
+4. Lire `.dcbp/ISSUES.md` - bugs ouverts
+
+### Phase 2: Summarize
+1. Résumer l'état actuel du projet
+2. Lister les tâches en cours
+3. Lister les blocages éventuels
+4. Suggérer les prochaines actions
+
+## Template de sortie
+
+```markdown
+## Status: <nom projet>
+
+### Dernière activité
+- Date: ...
+- Résumé: ...
+
+### En cours
+- [ ] Tâche 1
+- [ ] Tâche 2
+
+### Blocages
+- Aucun / Liste...
+
+### Bugs ouverts
+- X critique(s), Y majeur(s)
+
+### Prochaines étapes suggérées
+1. ...
+2. ...
+```
