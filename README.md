@@ -14,7 +14,6 @@ DCBP resout un probleme fondamental de Claude Code : **la perte de contexte entr
 - [Structure des fichiers](#structure-des-fichiers)
 - [Fichiers de memoire](#fichiers-de-memoire)
 - [Skills disponibles](#skills-disponibles)
-- [Workflow /create en detail](#workflow-create-en-detail)
 - [Workflow /dev en detail](#workflow-dev-en-detail)
 - [Workflow /start en detail](#workflow-start-en-detail)
 - [Workflow /archive en detail](#workflow-archive-en-detail)
@@ -50,7 +49,13 @@ DCBP cree une **memoire persistante** via des fichiers Markdown que Claude lit a
 ### Depuis GitHub
 
 ```bash
+# 1. Installer dcbp-cli
 pip install git+https://github.com/DelEx38/dcbp-cli.git
+
+# 2. Installer les skills globalement (une seule fois)
+dcbp install
+
+# 3. Redemarrer Claude Code pour activer les skills
 ```
 
 ### En developpement local
@@ -59,14 +64,25 @@ pip install git+https://github.com/DelEx38/dcbp-cli.git
 git clone https://github.com/DelEx38/dcbp-cli.git
 cd dcbp-cli
 pip install -e .
+dcbp install
 ```
 
 ### Verification
 
 ```bash
 dcbp --version
-# dcbp-cli 0.1.0
+# dcbp-cli 0.2.2
 ```
+
+### Commandes CLI
+
+| Commande | Description |
+|----------|-------------|
+| `dcbp install` | Installe les skills dans ~/.claude/skills/ (une fois) |
+| `dcbp install --force` | Met a jour les skills existants |
+| `dcbp init` | Initialise DCBP dans un projet |
+| `dcbp init --quick` | Initialise sans questions interactives |
+| `dcbp update` | Met a jour les templates d'un projet |
 
 ---
 
@@ -166,21 +182,37 @@ src/
 Dans Claude Code, utilisez les commandes :
 
 ```
+/start                              # Initialiser la session
 /dev ajouter l'authentification JWT
-/debug le endpoint /users retourne 500
+/bugfix le endpoint /users retourne 500
 /review src/api/auth.py
-/status
+/etat                               # Vue d'ensemble du projet
 ```
 
 ---
 
 ## Structure des fichiers
 
-Apres `dcbp init`, votre projet contient :
+### Skills globaux (apres `dcbp install`)
+
+Les skills sont installes dans votre dossier utilisateur :
+
+```
+~/.claude/skills/
+├── start/SKILL.md       # Initialisation de session
+├── dev/SKILL.md         # Developpement structure
+├── bugfix/SKILL.md      # Investigation de bugs
+├── review/SKILL.md      # Revue de code
+├── etat/SKILL.md        # Vue d'ensemble du projet
+└── archive/SKILL.md     # Archivage de PROGRESS.md
+```
+
+### Projet (apres `dcbp init`)
 
 ```
 mon-projet/
 ├── CLAUDE.md                    # Point d'entree Claude Code
+├── .claude/skills/              # Skills locaux (copie)
 └── .dcbp/
     ├── PROJECT.md               # [EDITER] Configuration projet
     ├── PROGRESS.md              # Journal des sessions
@@ -189,23 +221,6 @@ mon-projet/
     ├── DECISIONS.md             # Decisions architecturales
     ├── archive/                 # Sessions archivees (via /archive)
     ├── output/                  # Fichiers generes (optionnel)
-    ├── skills/
-    │   ├── create/
-    │   │   ├── SKILL.md         # Definition du skill /create
-    │   │   └── steps/
-    │   │       ├── step-00-init.md
-    │   │       ├── step-01-scaffold.md
-    │   │       └── step-02-complete.md
-    │   └── dev/
-    │       ├── SKILL.md         # Definition du skill /dev
-    │       └── steps/
-    │           ├── step-00-init.md
-    │           ├── step-01-context.md
-    │           ├── step-02-design.md
-    │           ├── step-03-implement.md
-    │           ├── step-04-verify.md
-    │           ├── step-05-review.md
-    │           └── step-06-complete.md
     └── scripts/
         ├── init_task.py         # Initialisation de taches
         ├── update_progress.py   # Mise a jour du progres
@@ -340,131 +355,40 @@ FastAPI
 
 ## Skills disponibles
 
+> **Note** : Les skills sont installes globalement dans `~/.claude/skills/` via `dcbp install`.
+> Ils sont disponibles dans tous vos projets apres installation.
+
 | Commande | Description | Quand l'utiliser |
 |----------|-------------|------------------|
 | `/start` | Initialisation de session complete | Debut de chaque session |
 | `/dev <feature>` | Developpement structure en 7 etapes | Nouvelle fonctionnalite |
-| `/debug <bug>` | Investigation et correction | Bug a resoudre |
+| `/bugfix <bug>` | Investigation et correction | Bug a resoudre |
 | `/review <cible>` | Revue de code | Avant merge/commit |
-| `/status` | Vue d'ensemble du projet | Vue rapide de l'etat |
+| `/etat` | Vue d'ensemble du projet DCBP | Vue rapide de l'etat |
 | `/archive [n]` | Archivage de PROGRESS.md | Quand PROGRESS.md > 10KB |
-| `/create [python\|django]` | Scaffold de code (optionnel) | Creer la structure de fichiers |
+
+> **Note** : `/debug` et `/status` sont des commandes natives de Claude Code.
+> DCBP utilise `/bugfix` et `/etat` pour eviter les conflits.
 
 ### Exemples d'utilisation
 
 ```
 /start                     # Initialise la session (contexte + taches + suggestions)
 
-/create                    # Demande interactivement Python ou Django
-/create python             # Cree un projet Python basique
-/create django             # Cree un projet Django
-
 /dev ajouter un systeme de notifications par email
 /dev -a implementer le CRUD pour les produits
 /dev -r DEV-005 reprendre la tache en cours
 
-/debug le login retourne 401 meme avec les bons credentials
-/debug -a les tests echouent sur CI mais passent en local
+/bugfix le login retourne 401 meme avec les bons credentials
+/bugfix -a les tests echouent sur CI mais passent en local
 
 /review src/services/payment.py
 /review les derniers commits
 
-/status                    # Vue d'ensemble rapide
+/etat                      # Vue d'ensemble rapide du projet DCBP
 
 /archive                   # Archive PROGRESS.md (garde 5 sessions)
 /archive 3                 # Garde seulement les 3 dernieres sessions
-```
-
----
-
-## Workflow /create en detail
-
-Le skill `/create` permet de creer un nouveau projet Python ou Django apres avoir initialise DCBP.
-
-### Quand l'utiliser
-
-- Apres `dcbp init` dans un dossier vide
-- Pour demarrer un nouveau projet avec une structure propre
-- Pour configurer automatiquement PROJECT.md
-
-### Types de projets
-
-| Type | Description | Structure |
-|------|-------------|-----------|
-| `python` | Projet Python basique (script, CLI, lib) | src/, tests/, pyproject.toml |
-| `django` | Application web Django | manage.py, apps/, templates/, static/ |
-
-### Workflow en 3 phases
-
-#### Phase 0 : Init
-- Demande le type de projet (si non specifie)
-- Demande le nom du projet
-- Determine l'emplacement de creation
-
-#### Phase 1 : Scaffold
-- Cree la structure de fichiers appropriee
-- Configure les outils (pytest, ruff)
-- Genere les fichiers de base (requirements.txt, .gitignore, README.md)
-
-#### Phase 2 : Complete
-- Met a jour PROJECT.md avec la stack du projet
-- Ajoute une entree dans PROGRESS.md
-- Affiche les prochaines etapes
-
-### Structure creee
-
-#### Python basique
-
-```
-mon-projet/
-├── src/
-│   └── mon_projet/
-│       ├── __init__.py
-│       └── main.py
-├── tests/
-│   └── __init__.py
-├── pyproject.toml
-├── requirements.txt
-├── requirements-dev.txt
-├── .gitignore
-└── README.md
-```
-
-#### Django
-
-```
-mon-projet/
-├── mon_projet/
-│   ├── __init__.py
-│   ├── settings.py
-│   ├── urls.py
-│   ├── wsgi.py
-│   └── asgi.py
-├── apps/
-├── templates/
-│   └── base.html
-├── static/
-├── manage.py
-├── requirements.txt
-├── requirements-dev.txt
-├── .gitignore
-├── .env.example
-└── README.md
-```
-
-### Exemples
-
-```bash
-# Interactif : demande le type et le nom
-/create
-
-# Direct : cree un projet Python nomme "mon-cli"
-/create python
-# > Nom du projet : mon-cli
-
-# Direct : cree un projet Django
-/create django
-# > Nom du projet : mon-app-web
 ```
 
 ---
@@ -767,7 +691,7 @@ Les steps du workflow `/dev` sont charges **un par un**, pas tous en meme temps.
 | Action | Tokens (input) |
 |--------|----------------|
 | `/start` (lit tout) | ~5700 |
-| `/status` (vue rapide) | ~3000 |
+| `/etat` (vue rapide) | ~3000 |
 | `/dev` (1 step) | ~1500-2000 |
 | `/archive` | ~500 |
 
@@ -808,12 +732,13 @@ Verifiez que :
 
 ### Les skills ne fonctionnent pas
 
-1. Verifiez que `.dcbp/skills/` contient les fichiers
-2. Essayez `dcbp update` pour reinstaller les templates
+1. Executez `dcbp install --force` pour reinstaller les skills globalement
+2. Redemarrez Claude Code pour recharger les skills
+3. Verifiez que `~/.claude/skills/` contient les dossiers des skills
 
 ### Claude oublie le contexte
 
-1. Lancez `/status` en debut de session
+1. Lancez `/start` en debut de session
 2. Verifiez que PROJECT.md est bien rempli
 3. Assurez-vous que PROGRESS.md contient l'historique recent
 
