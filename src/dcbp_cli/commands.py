@@ -117,6 +117,12 @@ def get_templates_path() -> Path:
         return Path(pkg_resources.resource_filename("dcbp_cli", "templates"))
 
 
+def is_interactive() -> bool:
+    """Vérifie si le terminal est interactif."""
+    import sys
+    return sys.stdin.isatty()
+
+
 def ask_text(prompt: str, default: str = "") -> str:
     """Demande une saisie texte."""
     if default:
@@ -124,8 +130,12 @@ def ask_text(prompt: str, default: str = "") -> str:
     else:
         prompt = f"{prompt}: "
 
-    response = input(prompt).strip()
-    return response if response else default
+    try:
+        response = input(prompt).strip()
+        return response if response else default
+    except (EOFError, KeyboardInterrupt):
+        print()  # Nouvelle ligne
+        return default
 
 
 def ask_choice(prompt: str, choices: dict, default: str = "1") -> str:
@@ -137,13 +147,17 @@ def ask_choice(prompt: str, choices: dict, default: str = "1") -> str:
         else:
             print(f"  {key}. {value}")
 
-    while True:
-        response = input(f"Choix [{default}]: ").strip()
-        if not response:
-            response = default
-        if response in choices:
-            return response
-        print(f"  [!] Choix invalide. Entrez un numero entre 1 et {len(choices)}")
+    try:
+        while True:
+            response = input(f"Choix [{default}]: ").strip()
+            if not response:
+                response = default
+            if response in choices:
+                return response
+            print(f"  [!] Choix invalide. Entrez un numero entre 1 et {len(choices)}")
+    except (EOFError, KeyboardInterrupt):
+        print()  # Nouvelle ligne
+        return default
 
 
 def generate_project_md(config: dict) -> str:
@@ -314,6 +328,12 @@ def init_project(project_path: Path, force: bool = False, skip_questions: bool =
 
     # Configuration du projet
     config = {}
+
+    # Vérifier si l'environnement est interactif
+    if not skip_questions and not is_interactive():
+        print("[!] Terminal non-interactif detecte, mode --quick active")
+        print()
+        skip_questions = True
 
     if not skip_questions:
         print("Repondez aux questions suivantes pour configurer votre projet.")
