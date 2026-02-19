@@ -400,16 +400,42 @@ def init_project(project_path: Path, force: bool = False, skip_questions: bool =
         if (dcbp_path / "archive").exists():
             print("    [+] Dossier archive/")
 
-    # Copier le dossier .skills (format natif Claude Code)
-    skills_template = templates_path / ".skills"
-    skills_path = project_path / ".skills"
+    # Copier le dossier .claude/skills (format natif Claude Code)
+    # 1. Dans le projet local
+    claude_template = templates_path / ".claude"
+    claude_path = project_path / ".claude"
+    if claude_template.exists():
+        if claude_path.exists() and force:
+            shutil.rmtree(claude_path)
+        if not claude_path.exists():
+            shutil.copytree(claude_template, claude_path)
+            skills_dirs = [d.name for d in (claude_path / "skills").iterdir() if d.is_dir()]
+            print(f"[+] Cree .claude/skills/ ({', '.join(sorted(skills_dirs))})")
+
+    # 2. Dans le dossier global ~/.claude/skills/ (pour que les skills soient toujours disponibles)
+    home_claude_path = Path.home() / ".claude"
+    home_skills_path = home_claude_path / "skills"
+    skills_template = templates_path / ".claude" / "skills"
     if skills_template.exists():
-        if skills_path.exists() and force:
-            shutil.rmtree(skills_path)
-        if not skills_path.exists():
-            shutil.copytree(skills_template, skills_path)
-            skills_files = [f.stem for f in skills_path.glob("*.md")]
-            print(f"[+] Cree .skills/ ({', '.join(sorted(skills_files))})")
+        home_claude_path.mkdir(exist_ok=True)
+        if home_skills_path.exists() and force:
+            shutil.rmtree(home_skills_path)
+        if not home_skills_path.exists():
+            shutil.copytree(skills_template, home_skills_path)
+            skills_dirs = [d.name for d in home_skills_path.iterdir() if d.is_dir()]
+            print(f"[+] Cree ~/.claude/skills/ ({', '.join(sorted(skills_dirs))})")
+        else:
+            # Copier les skills manquants sans écraser
+            for skill_dir in skills_template.iterdir():
+                if skill_dir.is_dir():
+                    dest_skill = home_skills_path / skill_dir.name
+                    if not dest_skill.exists():
+                        shutil.copytree(skill_dir, dest_skill)
+                        print(f"    [+] Ajoute skill: {skill_dir.name}")
+                    elif force:
+                        shutil.rmtree(dest_skill)
+                        shutil.copytree(skill_dir, dest_skill)
+                        print(f"    [*] Mis a jour: {skill_dir.name}")
 
     # Copier CLAUDE.md
     claude_template = templates_path / "CLAUDE.md"
@@ -448,9 +474,9 @@ def init_project(project_path: Path, force: bool = False, skip_questions: bool =
     print("Skills disponibles:")
     print("  /start                  - Initialiser une session")
     print("  /dev <feature>          - Developpement structure")
-    print("  /debug <bug>            - Investigation de bugs")
+    print("  /bugfix <bug>           - Investigation de bugs")
     print("  /review <cible>         - Revue de code")
-    print("  /status                 - Vue d'ensemble du projet")
+    print("  /etat                   - Vue d'ensemble du projet")
     print("  /archive                - Archiver PROGRESS.md")
     print()
 
@@ -491,15 +517,31 @@ def update_templates(project_path: Path) -> bool:
         "archive",
     ]
 
-    # Mettre a jour les skills
-    skills_src = templates_path / ".dcbp" / "skills"
-    skills_dst = dcbp_path / "skills"
+    # Mettre a jour les skills (.claude/skills/) - local
+    claude_skills_src = templates_path / ".claude" / "skills"
+    claude_path = project_path / ".claude"
+    claude_skills_dst = claude_path / "skills"
 
-    if skills_src.exists():
-        if skills_dst.exists():
-            shutil.rmtree(skills_dst)
-        shutil.copytree(skills_src, skills_dst)
-        print("[+] Mis a jour skills/")
+    if claude_skills_src.exists():
+        if not claude_path.exists():
+            claude_path.mkdir()
+        if claude_skills_dst.exists():
+            shutil.rmtree(claude_skills_dst)
+        shutil.copytree(claude_skills_src, claude_skills_dst)
+        skills_dirs = [d.name for d in claude_skills_dst.iterdir() if d.is_dir()]
+        print(f"[+] Mis a jour .claude/skills/ ({', '.join(sorted(skills_dirs))})")
+
+    # Mettre a jour les skills (~/.claude/skills/) - global
+    home_claude_path = Path.home() / ".claude"
+    home_skills_path = home_claude_path / "skills"
+
+    if claude_skills_src.exists():
+        home_claude_path.mkdir(exist_ok=True)
+        if home_skills_path.exists():
+            shutil.rmtree(home_skills_path)
+        shutil.copytree(claude_skills_src, home_skills_path)
+        skills_dirs = [d.name for d in home_skills_path.iterdir() if d.is_dir()]
+        print(f"[+] Mis a jour ~/.claude/skills/ ({', '.join(sorted(skills_dirs))})")
 
     # Mettre a jour les scripts
     scripts_src = templates_path / ".dcbp" / "scripts"

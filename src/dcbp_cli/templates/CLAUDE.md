@@ -12,7 +12,7 @@
 ### 🟡 Pendant la session
 
 3. **Appliquer la règle de focus** (voir ci-dessous)
-4. **Utiliser les skills** si approprié (`/dev`, `/debug`, `/review`, `/status`)
+4. **Utiliser les skills** si approprié (`/dev`, `/bugfix`, `/review`, `/etat`)
 5. **Documenter les décisions importantes** dans `DECISIONS.md`
 
 ### 🔴 Fin de session
@@ -44,11 +44,10 @@
 | Commande | Description |
 |----------|-------------|
 | `/start` | Initialiser une session (contexte + tâches + suggestions) |
-| `/create [python\|django]` | Créer un nouveau projet Python ou Django |
 | `/dev <feature>` | Développement structuré (Analyze → Plan → Execute → Verify) |
-| `/debug <bug>` | Investigation et correction de bugs |
+| `/bugfix <bug>` | Investigation et correction de bugs |
 | `/review <cible>` | Revue de code |
-| `/status` | Vue d'ensemble du projet |
+| `/etat` | Vue d'ensemble du projet DCBP |
 | `/archive [n]` | Archiver PROGRESS.md (garde n sessions, défaut: 5) |
 
 ### Flags communs
