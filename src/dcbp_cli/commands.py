@@ -570,3 +570,86 @@ def update_templates(project_path: Path) -> bool:
     print()
 
     return True
+
+
+def install_skills(force: bool = False) -> bool:
+    """
+    Installe les skills DCBP globalement dans ~/.claude/skills/.
+
+    Cette commande doit être exécutée une seule fois après l'installation
+    de dcbp-cli. Les skills seront ensuite disponibles dans tous les projets.
+
+    Args:
+        force: Si True, écrase les skills existants
+
+    Returns:
+        True si succès, False sinon
+    """
+    templates_path = get_templates_path()
+    skills_template = templates_path / ".claude" / "skills"
+
+    if not skills_template.exists():
+        print("[X] Skills templates non trouves")
+        return False
+
+    home_claude_path = Path.home() / ".claude"
+    home_skills_path = home_claude_path / "skills"
+
+    print()
+    print("=" * 60)
+    print(f"  DCBP v{__version__} - Installation des Skills")
+    print("=" * 60)
+    print()
+    print(f"[*] Installation dans: {home_skills_path}")
+    print()
+
+    # Créer le dossier ~/.claude si nécessaire
+    home_claude_path.mkdir(exist_ok=True)
+
+    # Installer les skills
+    installed = []
+    updated = []
+    skipped = []
+
+    for skill_dir in skills_template.iterdir():
+        if skill_dir.is_dir():
+            dest_skill = home_skills_path / skill_dir.name
+            if not dest_skill.exists():
+                shutil.copytree(skill_dir, dest_skill)
+                installed.append(skill_dir.name)
+                print(f"[+] Installe: /{skill_dir.name}")
+            elif force:
+                shutil.rmtree(dest_skill)
+                shutil.copytree(skill_dir, dest_skill)
+                updated.append(skill_dir.name)
+                print(f"[*] Met a jour: /{skill_dir.name}")
+            else:
+                skipped.append(skill_dir.name)
+                print(f"[=] Existe deja: /{skill_dir.name}")
+
+    print()
+    print("=" * 60)
+    print("  [OK] Installation terminee!")
+    print("=" * 60)
+    print()
+
+    if installed:
+        print(f"  Installes : {len(installed)} ({', '.join(installed)})")
+    if updated:
+        print(f"  Mis a jour: {len(updated)} ({', '.join(updated)})")
+    if skipped:
+        print(f"  Ignores   : {len(skipped)} (utilisez --force pour ecraser)")
+
+    print()
+    print("Skills disponibles:")
+    print("  /start                  - Initialiser une session")
+    print("  /dev <feature>          - Developpement structure")
+    print("  /bugfix <bug>           - Investigation de bugs")
+    print("  /review <cible>         - Revue de code")
+    print("  /etat                   - Vue d'ensemble du projet")
+    print("  /archive                - Archiver PROGRESS.md")
+    print()
+    print("[!] Redemarrez Claude Code pour activer les nouveaux skills")
+    print()
+
+    return True
