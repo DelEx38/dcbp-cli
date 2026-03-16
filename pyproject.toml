@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dcbp-cli"
-version = "0.2.2"
+version = "0.3.0"
 description = "DC Blueprint - Système de mémoire persistante et workflows structurés pour Claude Code"
 readme = "README.md"
 license = {text = "MIT"}

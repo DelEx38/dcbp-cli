@@ -12,11 +12,11 @@ Lire **tous** les fichiers de mémoire :
 
 | Fichier | Contenu |
 |---------|---------|
-| `.dcbp/PROJECT.md` | Stack, architecture, conventions |
-| `.dcbp/PROGRESS.md` | Journal des sessions |
-| `.dcbp/TASKS.md` | Backlog et tâches en cours |
-| `.dcbp/ISSUES.md` | Bugs et dette technique |
-| `.dcbp/DECISIONS.md` | Décisions architecturales |
+| `.claude/dcbp/PROJECT.md` | Stack, architecture, conventions |
+| `.claude/dcbp/PROGRESS.md` | Journal des sessions |
+| `.claude/dcbp/TASKS.md` | Backlog et tâches en cours |
+| `.claude/dcbp/ISSUES.md` | Bugs et dette technique |
+| `.claude/dcbp/DECISIONS.md` | Décisions architecturales |
 
 ### 2. Analyser le contexte
 

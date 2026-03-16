@@ -9,10 +9,10 @@ Afficher une vue d'ensemble complète du projet.
 ### 1. Lire la mémoire
 
 Lire les fichiers suivants :
-- `.dcbp/PROJECT.md` - Contexte général
-- `.dcbp/PROGRESS.md` - Dernières sessions
-- `.dcbp/TASKS.md` - État du backlog
-- `.dcbp/ISSUES.md` - Bugs ouverts
+- `.claude/dcbp/PROJECT.md` - Contexte général
+- `.claude/dcbp/PROGRESS.md` - Dernières sessions
+- `.claude/dcbp/TASKS.md` - État du backlog
+- `.claude/dcbp/ISSUES.md` - Bugs ouverts
 
 ### 2. Extraire les informations clés
 

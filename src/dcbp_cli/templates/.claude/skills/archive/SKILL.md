@@ -20,7 +20,7 @@ Archive les anciennes sessions pour garder PROGRESS.md léger et économiser des
 ## Workflow
 
 ### Phase 1: Analyser PROGRESS.md
-1. Lire `.dcbp/PROGRESS.md`
+1. Lire `.claude/dcbp/PROGRESS.md`
 2. Identifier chaque session par le pattern `## [YYYY-MM-DD]`
 3. Compter le nombre total de sessions
 4. Si sessions ≤ N à garder → rien à archiver, terminer
@@ -30,7 +30,7 @@ Archive les anciennes sessions pour garder PROGRESS.md léger et économiser des
 2. Archiver les autres (plus anciennes)
 
 ### Phase 3: Créer l'archive
-1. Créer/mettre à jour `.dcbp/archive/PROGRESS-{YYYY-MM}.md`
+1. Créer/mettre à jour `.claude/dcbp/archive/PROGRESS-{YYYY-MM}.md`
 2. Grouper les sessions archivées par mois
 3. Conserver l'ordre chronologique inverse
 
@@ -50,8 +50,8 @@ Sessions après  : Y (gardées)
 Sessions archivées : Z
 
 Fichiers modifiés :
-- .dcbp/PROGRESS.md (réduit)
-- .dcbp/archive/PROGRESS-YYYY-MM.md (créé/mis à jour)
+- .claude/dcbp/PROGRESS.md (réduit)
+- .claude/dcbp/archive/PROGRESS-YYYY-MM.md (créé/mis à jour)
 
 Estimation tokens économisés : ~[estimation]
 

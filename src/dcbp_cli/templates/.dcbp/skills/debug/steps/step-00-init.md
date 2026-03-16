@@ -43,13 +43,13 @@ Reste → {bug_description}
 
 {bug_id} = BUG-NN-{bug_name}
   Ex: "BUG-01-login-401"
-  (NN = prochain numéro disponible dans .dcbp/output/debug/)
+  (NN = prochain numéro disponible dans .claude/dcbp/output/debug/)
 ```
 
 ### 3. Mode Resume (si -r)
 
 Si `{resume_bug}` est défini :
-1. Chercher le dossier dans `.dcbp/output/debug/`
+1. Chercher le dossier dans `.claude/dcbp/output/debug/`
 2. Lire `00-init.md` pour restaurer les variables
 3. Trouver la dernière étape complétée
 4. Charger l'étape suivante
@@ -58,8 +58,8 @@ Si `{resume_bug}` est défini :
 ### 4. Charger contexte projet
 
 **OBLIGATOIRE :** Lire ces fichiers :
-- `.dcbp/PROJECT.md` - Stack, architecture
-- `.dcbp/ISSUES.md` - Bugs connus (vérifier si déjà documenté)
+- `.claude/dcbp/PROJECT.md` - Stack, architecture
+- `.claude/dcbp/ISSUES.md` - Bugs connus (vérifier si déjà documenté)
 
 Extraire :
 - Stack technique
@@ -71,7 +71,7 @@ Extraire :
 Si `{save_mode}` = true :
 
 ```bash
-mkdir -p .dcbp/output/debug/{bug_id}
+mkdir -p .claude/dcbp/output/debug/{bug_id}
 ```
 
 Créer `00-init.md` :

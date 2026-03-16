@@ -55,13 +55,13 @@ Si {review_target} = "derniers commits":
 
 {review_id} = REV-NN-{target_name}
   Ex: "REV-01-auth"
-  (NN = prochain numéro disponible dans .dcbp/output/review/)
+  (NN = prochain numéro disponible dans .claude/dcbp/output/review/)
 ```
 
 ### 4. Charger contexte projet
 
 **OBLIGATOIRE :** Lire ces fichiers :
-- `.dcbp/PROJECT.md` - Conventions, style, architecture
+- `.claude/dcbp/PROJECT.md` - Conventions, style, architecture
 
 Extraire :
 - Style de code attendu
@@ -85,7 +85,7 @@ Extraire :
 Si `{save_mode}` = true :
 
 ```bash
-mkdir -p .dcbp/output/review/{review_id}
+mkdir -p .claude/dcbp/output/review/{review_id}
 ```
 
 Créer `00-init.md` :

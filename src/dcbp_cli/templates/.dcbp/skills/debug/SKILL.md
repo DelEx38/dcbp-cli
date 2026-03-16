@@ -21,7 +21,7 @@ Workflow pour investiguer et corriger un bug de manière méthodique.
 | Court | Long | Description |
 |-------|------|-------------|
 | `-a` | `--auto` | Mode autonome : pas de confirmations |
-| `-s` | `--save` | Sauvegarde chaque étape dans `.dcbp/output/debug/` |
+| `-s` | `--save` | Sauvegarde chaque étape dans `.claude/dcbp/output/debug/` |
 | `-r` | `--resume` | Reprend un debug précédent |
 | `-A` | `--no-auto` | Désactive le mode auto |
 | `-S` | `--no-save` | Désactive la sauvegarde |
@@ -47,7 +47,7 @@ Workflow pour investiguer et corriger un bug de manière méthodique.
 ## Structure de sauvegarde (si -s)
 
 ```
-.dcbp/output/debug/{bug_id}/
+.claude/dcbp/output/debug/{bug_id}/
 ├── 00-init.md
 ├── 01-reproduce.md
 ├── 02-investigate.md

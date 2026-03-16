@@ -21,7 +21,7 @@ Workflow structuré pour implémenter des fonctionnalités de manière méthodiq
 | Flag | Long | Description |
 |------|------|-------------|
 | `-a` | `--auto` | Mode autonome : pas de confirmations |
-| `-s` | `--save` | Sauvegarde chaque étape dans `.dcbp/output/dev/` |
+| `-s` | `--save` | Sauvegarde chaque étape dans `.claude/dcbp/output/dev/` |
 | `-t` | `--test` | Inclut création et exécution des tests |
 | `-r` | `--resume` | Reprend une tâche précédente |
 | `-A` | `--no-auto` | Désactive le mode auto |
@@ -48,12 +48,12 @@ Workflow structuré pour implémenter des fonctionnalités de manière méthodiq
 | `{auto_mode}` | Skip les confirmations |
 | `{save_mode}` | Sauvegarde les outputs |
 | `{test_mode}` | Inclut les tests |
-| `{output_dir}` | Chemin vers `.dcbp/output/dev/{task_id}/` |
+| `{output_dir}` | Chemin vers `.claude/dcbp/output/dev/{task_id}/` |
 
 ## Output Structure (si save_mode)
 
 ```
-.dcbp/output/dev/{task_id}/
+.claude/dcbp/output/dev/{task_id}/
 ├── 00-init.md
 ├── 01-context.md
 ├── 02-design.md

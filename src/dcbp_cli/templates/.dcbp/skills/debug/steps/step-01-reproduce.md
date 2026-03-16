@@ -53,7 +53,7 @@ Questions à répondre :
 
 ### 5. Sauvegarder (si save_mode)
 
-Créer `.dcbp/output/debug/{bug_id}/01-reproduce.md` :
+Créer `.claude/dcbp/output/debug/{bug_id}/01-reproduce.md` :
 
 ```markdown
 # Step 1: Reproduce

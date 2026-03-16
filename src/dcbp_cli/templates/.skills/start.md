@@ -10,11 +10,11 @@
 ## Workflow
 
 ### Phase 1: Charger le contexte
-1. Lire `.dcbp/PROJECT.md` - Stack, architecture, conventions
-2. Lire `.dcbp/PROGRESS.md` - Dernières sessions (2-3 dernières)
-3. Lire `.dcbp/TASKS.md` - Backlog et tâches en cours
-4. Lire `.dcbp/ISSUES.md` - Bugs et dette technique
-5. Lire `.dcbp/DECISIONS.md` - Décisions architecturales
+1. Lire `.claude/dcbp/PROJECT.md` - Stack, architecture, conventions
+2. Lire `.claude/dcbp/PROGRESS.md` - Dernières sessions (2-3 dernières)
+3. Lire `.claude/dcbp/TASKS.md` - Backlog et tâches en cours
+4. Lire `.claude/dcbp/ISSUES.md` - Bugs et dette technique
+5. Lire `.claude/dcbp/DECISIONS.md` - Décisions architecturales
 
 ### Phase 2: Analyser
 1. Extraire la dernière session et prochaines étapes

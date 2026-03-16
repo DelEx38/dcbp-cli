@@ -18,7 +18,7 @@ next_step: steps/step-05-review.md
 
 ### 1. Charger les commandes de validation
 
-Depuis `.dcbp/PROJECT.md` section "Validation" :
+Depuis `.claude/dcbp/PROJECT.md` section "Validation" :
 - `{lint_command}`
 - `{typecheck_command}`
 - `{test_command}`

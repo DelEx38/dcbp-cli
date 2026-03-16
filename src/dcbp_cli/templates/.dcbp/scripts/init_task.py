@@ -20,14 +20,14 @@ from pathlib import Path
 
 
 def get_dcbp_root() -> Path:
-    """Trouve le dossier .dcbp le plus proche."""
+    """Trouve le dossier .claude/dcbp le plus proche."""
     current = Path.cwd()
     while current != current.parent:
-        dcbp_path = current / ".dcbp"
+        dcbp_path = current / ".claude" / "dcbp"
         if dcbp_path.exists():
             return dcbp_path
         current = current.parent
-    raise FileNotFoundError(".dcbp folder not found")
+    raise FileNotFoundError(".claude/dcbp folder not found")
 
 
 def to_kebab_case(text: str) -> str:

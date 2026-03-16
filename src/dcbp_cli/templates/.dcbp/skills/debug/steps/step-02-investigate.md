@@ -69,7 +69,7 @@ Lister les causes possibles par ordre de probabilité :
 
 ### 5. Sauvegarder (si save_mode)
 
-Créer `.dcbp/output/debug/{bug_id}/02-investigate.md` :
+Créer `.claude/dcbp/output/debug/{bug_id}/02-investigate.md` :
 
 ```markdown
 # Step 2: Investigate

@@ -31,7 +31,7 @@ Sessions totales : [1, 2, 3, 4, 5, 6, 7, 8]
 
 ### 4. Créer/mettre à jour l'archive
 
-Fichier : `.dcbp/archive/PROGRESS-{YYYY-MM}.md`
+Fichier : `.claude/dcbp/archive/PROGRESS-{YYYY-MM}.md`
 
 ```markdown
 # PROGRESS - Archive {Mois YYYY}
@@ -84,8 +84,8 @@ Sessions après  : Y (gardées)
 Sessions archivées : Z
 
 Fichiers modifiés :
-- .dcbp/PROGRESS.md (réduit)
-- .dcbp/archive/PROGRESS-2026-02.md (créé/mis à jour)
+- .claude/dcbp/PROGRESS.md (réduit)
+- .claude/dcbp/archive/PROGRESS-2026-02.md (créé/mis à jour)
 
 Estimation tokens économisés : ~{estimation}
 
@@ -103,7 +103,7 @@ Tokens économisés ≈ (taille archivée en bytes) / 3.5
 ## Notes
 
 - Ne jamais supprimer de sessions, toujours archiver
-- Le dossier `.dcbp/archive/` est créé automatiquement si nécessaire
+- Le dossier `.claude/dcbp/archive/` est créé automatiquement si nécessaire
 - Les archives peuvent être consultées mais ne sont pas chargées par `/start`
 
 ## Fin du workflow

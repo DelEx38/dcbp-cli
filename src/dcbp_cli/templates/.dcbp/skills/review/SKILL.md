@@ -21,7 +21,7 @@ Workflow pour effectuer une revue de code structurée et complète.
 | Court | Long | Description |
 |-------|------|-------------|
 | `-a` | `--auto` | Mode autonome : pas de confirmations |
-| `-s` | `--save` | Sauvegarde le rapport dans `.dcbp/output/review/` |
+| `-s` | `--save` | Sauvegarde le rapport dans `.claude/dcbp/output/review/` |
 | `-A` | `--no-auto` | Désactive le mode auto |
 | `-S` | `--no-save` | Désactive la sauvegarde |
 
@@ -55,7 +55,7 @@ Workflow pour effectuer une revue de code structurée et complète.
 ## Structure de sauvegarde (si -s)
 
 ```
-.dcbp/output/review/{review_id}/
+.claude/dcbp/output/review/{review_id}/
 ├── 00-init.md
 ├── 01-analyze.md
 └── 02-report.md

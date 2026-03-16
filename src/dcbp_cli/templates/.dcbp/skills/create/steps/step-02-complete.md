@@ -8,7 +8,7 @@ Mettre à jour la mémoire DCBP et fournir un résumé final.
 
 ### 1. Mettre à jour PROJECT.md
 
-Remplacer le contenu de `.dcbp/PROJECT.md` avec les informations du projet créé.
+Remplacer le contenu de `.claude/dcbp/PROJECT.md` avec les informations du projet créé.
 
 #### Pour Python basique :
 

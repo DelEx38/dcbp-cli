@@ -21,14 +21,14 @@ Archive les anciennes sessions pour garder PROGRESS.md léger et économiser des
 ## Ce que fait ce skill
 
 1. **Compte** les sessions dans PROGRESS.md
-2. **Déplace** les anciennes vers `.dcbp/archive/PROGRESS-{date}.md`
+2. **Déplace** les anciennes vers `.claude/dcbp/archive/PROGRESS-{date}.md`
 3. **Garde** les N dernières sessions dans PROGRESS.md
 4. **Affiche** un résumé (tokens économisés)
 
 ## Structure d'archive
 
 ```
-.dcbp/
+.claude/dcbp/
 ├── PROGRESS.md              # Sessions récentes (5 dernières)
 └── archive/
     ├── PROGRESS-2026-01.md  # Archive janvier

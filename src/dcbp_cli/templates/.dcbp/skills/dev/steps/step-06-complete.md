@@ -139,7 +139,7 @@ Si des problèmes ont été découverts mais non résolus :
 - {suggestion 1}
 - {suggestion 2}
 
-**Outputs:** `.dcbp/output/dev/{task_id}/`
+**Outputs:** `.claude/dcbp/output/dev/{task_id}/`
 ```
 
 ## Critères de succès

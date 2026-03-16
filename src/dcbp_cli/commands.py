@@ -305,7 +305,8 @@ def init_project(project_path: Path, force: bool = False, skip_questions: bool =
         True si succes, False sinon
     """
     project_path = project_path.resolve()
-    dcbp_path = project_path / ".dcbp"
+    claude_path = project_path / ".claude"
+    dcbp_path = claude_path / "dcbp"
     claude_md = project_path / "CLAUDE.md"
 
     # Verifier si deja initialise
@@ -377,13 +378,17 @@ def init_project(project_path: Path, force: bool = False, skip_questions: bool =
     print("[*] Creation de la structure DCBP...")
     print()
 
-    # Copier le dossier .dcbp
+    # Creer le dossier .claude s'il n'existe pas
+    claude_path.mkdir(exist_ok=True)
+
+    # Copier le dossier .dcbp dans .claude/dcbp
     dcbp_template = templates_path / ".dcbp"
     if dcbp_template.exists():
         if dcbp_path.exists() and force:
             shutil.rmtree(dcbp_path)
-        shutil.copytree(dcbp_template, dcbp_path)
-        print("[+] Cree .dcbp/")
+        if not dcbp_path.exists():
+            shutil.copytree(dcbp_template, dcbp_path)
+        print("[+] Cree .claude/dcbp/")
 
         # Lister les composants crees
         if (dcbp_path / "skills").exists():
@@ -400,16 +405,15 @@ def init_project(project_path: Path, force: bool = False, skip_questions: bool =
         if (dcbp_path / "archive").exists():
             print("    [+] Dossier archive/")
 
-    # Copier le dossier .claude/skills (format natif Claude Code)
-    # 1. Dans le projet local
-    claude_template = templates_path / ".claude"
-    claude_path = project_path / ".claude"
-    if claude_template.exists():
-        if claude_path.exists() and force:
-            shutil.rmtree(claude_path)
-        if not claude_path.exists():
-            shutil.copytree(claude_template, claude_path)
-            skills_dirs = [d.name for d in (claude_path / "skills").iterdir() if d.is_dir()]
+    # Copier les skills dans .claude/skills/ (format natif Claude Code)
+    skills_template = templates_path / ".claude" / "skills"
+    skills_path = claude_path / "skills"
+    if skills_template.exists():
+        if skills_path.exists() and force:
+            shutil.rmtree(skills_path)
+        if not skills_path.exists():
+            shutil.copytree(skills_template, skills_path)
+            skills_dirs = [d.name for d in skills_path.iterdir() if d.is_dir()]
             print(f"[+] Cree .claude/skills/ ({', '.join(sorted(skills_dirs))})")
 
     # 2. Dans le dossier global ~/.claude/skills/ (pour que les skills soient toujours disponibles)
@@ -494,7 +498,8 @@ def update_templates(project_path: Path) -> bool:
         True si succes, False sinon
     """
     project_path = project_path.resolve()
-    dcbp_path = project_path / ".dcbp"
+    claude_path = project_path / ".claude"
+    dcbp_path = claude_path / "dcbp"
 
     if not dcbp_path.exists():
         print("[X] DCBP non initialise dans ce projet")
@@ -519,12 +524,9 @@ def update_templates(project_path: Path) -> bool:
 
     # Mettre a jour les skills (.claude/skills/) - local
     claude_skills_src = templates_path / ".claude" / "skills"
-    claude_path = project_path / ".claude"
     claude_skills_dst = claude_path / "skills"
 
     if claude_skills_src.exists():
-        if not claude_path.exists():
-            claude_path.mkdir()
         if claude_skills_dst.exists():
             shutil.rmtree(claude_skills_dst)
         shutil.copytree(claude_skills_src, claude_skills_dst)

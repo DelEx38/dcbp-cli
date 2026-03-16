@@ -76,7 +76,7 @@ Ajouter une entrée :
 
 ### 6. Sauvegarder (si save_mode)
 
-Créer `.dcbp/output/debug/{bug_id}/03-fix.md` :
+Créer `.claude/dcbp/output/debug/{bug_id}/03-fix.md` :
 
 ```markdown
 # Step 3: Fix

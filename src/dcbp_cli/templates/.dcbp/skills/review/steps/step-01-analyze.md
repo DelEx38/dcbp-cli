@@ -91,7 +91,7 @@ next_step: steps/step-02-report.md
 
 ### Sauvegarder (si save_mode)
 
-Créer `.dcbp/output/review/{review_id}/01-analyze.md` :
+Créer `.claude/dcbp/output/review/{review_id}/01-analyze.md` :
 
 ```markdown
 # Step 1: Analyze

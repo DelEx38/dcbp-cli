@@ -124,7 +124,7 @@ Tip: /debug <issue> pour corriger les critiques
 
 ### 6. Sauvegarder (si save_mode)
 
-Créer `.dcbp/output/review/{review_id}/02-report.md` avec le rapport complet.
+Créer `.claude/dcbp/output/review/{review_id}/02-report.md` avec le rapport complet.
 
 ### 7. Point de confirmation (si !auto_mode)
 

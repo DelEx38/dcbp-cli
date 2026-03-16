@@ -46,13 +46,13 @@ Reste → {task_description}
 
 {task_id} = NN-{feature_name}
   Ex: "01-ajouter-authentification"
-  (NN = prochain numéro disponible dans .dcbp/output/dev/)
+  (NN = prochain numéro disponible dans .claude/dcbp/output/dev/)
 ```
 
 ### 3. Mode Resume (si -r)
 
 Si `{resume_task}` est défini :
-1. Chercher le dossier dans `.dcbp/output/dev/`
+1. Chercher le dossier dans `.claude/dcbp/output/dev/`
 2. Lire `00-init.md` pour restaurer les variables
 3. Trouver la dernière étape complétée
 4. Charger l'étape suivante
@@ -61,8 +61,8 @@ Si `{resume_task}` est défini :
 ### 4. Charger contexte projet
 
 **OBLIGATOIRE :** Lire ces fichiers avant de continuer :
-- `.dcbp/PROJECT.md` - Stack, conventions, architecture
-- `.dcbp/PROGRESS.md` - Sessions récentes (dernières 2-3)
+- `.claude/dcbp/PROJECT.md` - Stack, conventions, architecture
+- `.claude/dcbp/PROGRESS.md` - Sessions récentes (dernières 2-3)
 
 Extraire :
 - Stack technique
@@ -75,7 +75,7 @@ Extraire :
 Si `{save_mode}` = true :
 
 ```bash
-mkdir -p .dcbp/output/dev/{task_id}
+mkdir -p .claude/dcbp/output/dev/{task_id}
 ```
 
 Créer `00-init.md` :

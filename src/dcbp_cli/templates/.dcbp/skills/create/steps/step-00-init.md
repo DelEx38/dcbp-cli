@@ -36,7 +36,7 @@ Demander le nom du projet à l'utilisateur :
 
 ### 4. Vérifier le répertoire
 
-- Si on est dans un dossier vide (seulement .dcbp/ et CLAUDE.md), créer à la racine
+- Si on est dans un dossier vide (seulement .claude/dcbp/ et CLAUDE.md), créer à la racine
 - Sinon, créer un sous-dossier avec le nom du projet
 
 ### 5. Définir les variables d'état
