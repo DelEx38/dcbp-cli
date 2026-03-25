@@ -381,8 +381,8 @@ def init_project(project_path: Path, force: bool = False, skip_questions: bool =
     # Creer le dossier .claude s'il n'existe pas
     claude_path.mkdir(exist_ok=True)
 
-    # Copier le dossier .dcbp dans .claude/dcbp
-    dcbp_template = templates_path / ".dcbp"
+    # Copier le dossier dcbp dans .claude/dcbp
+    dcbp_template = templates_path / ".claude" / "dcbp"
     if dcbp_template.exists():
         if dcbp_path.exists() and force:
             shutil.rmtree(dcbp_path)
@@ -546,7 +546,7 @@ def update_templates(project_path: Path) -> bool:
         print(f"[+] Mis a jour ~/.claude/skills/ ({', '.join(sorted(skills_dirs))})")
 
     # Mettre a jour les scripts
-    scripts_src = templates_path / ".dcbp" / "scripts"
+    scripts_src = templates_path / ".claude" / "dcbp" / "scripts"
     scripts_dst = dcbp_path / "scripts"
 
     if scripts_src.exists():
