@@ -52,7 +52,6 @@
 
 ### Flags communs
 - `-a` : Mode autonome (pas de confirmations)
-- `-s` : Sauvegarde dans `.claude/dcbp/output/`
 - `-r <id>` : Reprendre une tâche
 
 ## Mémoire Projet (dans `.claude/dcbp/`)
