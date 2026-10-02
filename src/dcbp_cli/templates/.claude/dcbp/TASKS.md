@@ -1,35 +1,25 @@
-# Tâches et Backlog
+# Tâches
+
+> Index du travail. Pour le contexte détaillé d'une tâche, voir `.claude/dcbp/tasks/DEV-XXX.md`.
+
+## En cours
+
+| ID | Titre | Statut |
+|----|-------|--------|
+| — | — | — |
+
+## À faire
+
+| ID | Titre | Statut | Dépendances |
+|----|-------|--------|-------------|
+| — | — | PLANNED | — |
+
+## Terminé
+
+| ID | Titre |
+|----|-------|
+| — | — |
 
 ---
 
-## En cours 🔄
-
-*Aucune tâche en cours*
-
----
-
-## À faire 📋
-
-### Priorité haute 🔴
-
-### Priorité moyenne 🟡
-
-### Priorité basse 🟢
-
----
-
-## Terminé ✅
-
----
-
-## Backlog / Idées 💡
-
----
-
-## Tags
-- `#feature` - Nouvelle fonctionnalité
-- `#bugfix` - Correction de bug
-- `#refactor` - Amélioration du code
-- `#docs` - Documentation
-- `#test` - Tests
-- `#setup` - Configuration
+*Statuts : PLANNED · READY · IN_PROGRESS · BLOCKED · DONE*
