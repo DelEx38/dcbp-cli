@@ -74,6 +74,18 @@ Exemples:
         help="Chemin du projet (défaut: répertoire courant)"
     )
 
+    # Commande doctor
+    doctor_parser = subparsers.add_parser(
+        "doctor",
+        help="Vérifie l'état d'un projet DCBP (read-only)"
+    )
+    doctor_parser.add_argument(
+        "--path", "-p",
+        type=str,
+        default=".",
+        help="Chemin du projet (défaut: répertoire courant)"
+    )
+
     args = parser.parse_args()
 
     if args.command is None:
@@ -91,6 +103,12 @@ Exemples:
     elif args.command == "update":
         success = update_templates(Path(args.path))
         sys.exit(0 if success else 1)
+
+    elif args.command == "doctor":
+        from .doctor import run_checks, print_doctor_result
+        result = run_checks(Path(args.path))
+        print_doctor_result(result)
+        sys.exit(result.exit_code)
 
 if __name__ == "__main__":
     main()
