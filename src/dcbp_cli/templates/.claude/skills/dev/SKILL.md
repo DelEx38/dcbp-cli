@@ -27,7 +27,7 @@ Développement d'une fonctionnalité en 7 phases.
 
 ### Phase 2: Context
 1. Lire PROJECT.md pour le contexte projet
-2. Lire PROGRESS.md pour l'historique récent
+2. Lire STATE.md pour l'état courant et la tâche active
 3. Analyser les fichiers pertinents
 4. Identifier les patterns existants
 
@@ -53,6 +53,7 @@ Développement d'une fonctionnalité en 7 phases.
 3. Suggérer des améliorations
 
 ### Phase 7: Complete
-1. Mettre à jour PROGRESS.md
-2. Mettre à jour TASKS.md
+1. Mettre à jour STATE.md (objectif accompli, prochaine action)
+2. Mettre à jour TASKS.md (marquer DEV-XXX DONE)
 3. Documenter les décisions dans DECISIONS.md si nécessaire
+4. Si une tâche DEV-XXX était active, mettre à jour `.claude/dcbp/tasks/DEV-XXX.md`

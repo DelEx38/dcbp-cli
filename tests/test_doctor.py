@@ -1,5 +1,5 @@
 """
-Tests for DCBP Doctor and Contract modules.
+Tests for DCBP Doctor and Contract modules — Memory v2 (D01-D20).
 
 Doctor contract: strictly read-only — never creates, modifies, or deletes any file.
 """
@@ -9,7 +9,14 @@ from pathlib import Path
 
 import pytest
 
-from dcbp_cli.contract import CORE_SKILL_NAMES, LEGACY_SCRIPT_NAMES
+from dcbp_cli.contract import (
+    CORE_SKILL_NAMES,
+    LEGACY_SCRIPT_NAMES,
+    MEMORY_V2_ESSENTIAL,
+    MEMORY_V2_EXPECTED,
+    MEMORY_V2_DIRS,
+    LEGACY_FILES,
+)
 from dcbp_cli.doctor import (
     CheckResult,
     DoctorResult,
@@ -72,6 +79,34 @@ class TestContract:
         assert "init_task.py" in LEGACY_SCRIPT_NAMES
         assert "update_progress.py" in LEGACY_SCRIPT_NAMES
         assert "sync_memory.py" in LEGACY_SCRIPT_NAMES
+
+    def test_memory_v2_essential_is_frozenset(self):
+        assert isinstance(MEMORY_V2_ESSENTIAL, frozenset)
+
+    def test_memory_v2_essential_content(self):
+        assert "PROJECT.md" in MEMORY_V2_ESSENTIAL
+        assert "STATE.md" in MEMORY_V2_ESSENTIAL
+
+    def test_memory_v2_expected_is_frozenset(self):
+        assert isinstance(MEMORY_V2_EXPECTED, frozenset)
+
+    def test_memory_v2_expected_content(self):
+        assert "TASKS.md" in MEMORY_V2_EXPECTED
+        assert "ISSUES.md" in MEMORY_V2_EXPECTED
+        assert "DECISIONS.md" in MEMORY_V2_EXPECTED
+
+    def test_memory_v2_dirs_is_frozenset(self):
+        assert isinstance(MEMORY_V2_DIRS, frozenset)
+
+    def test_memory_v2_dirs_content(self):
+        assert "tasks" in MEMORY_V2_DIRS
+        assert "archive" in MEMORY_V2_DIRS
+
+    def test_legacy_files_is_frozenset(self):
+        assert isinstance(LEGACY_FILES, frozenset)
+
+    def test_legacy_files_content(self):
+        assert "PROGRESS.md" in LEGACY_FILES
 
 
 # ===========================================================================
@@ -156,7 +191,7 @@ class TestRunChecksUninitialized:
         d02 = next(c for c in result.checks if c.id == "D02")
         assert d02.status == "ERROR"
 
-    def test_d03_error_when_no_progress_md(self, empty_project):
+    def test_d03_error_when_no_state_md(self, empty_project):
         result = run_checks(empty_project)
         d03 = next(c for c in result.checks if c.id == "D03")
         assert d03.status == "ERROR"
@@ -167,14 +202,14 @@ class TestRunChecksUninitialized:
         assert d04.status == "WARNING"
 
     def test_total_check_count(self, empty_project):
-        """Doctor always emits exactly 17 checks."""
+        """Doctor always emits exactly 20 checks."""
         result = run_checks(empty_project)
-        assert len(result.checks) == 17
+        assert len(result.checks) == 20
 
-    def test_check_ids_are_d01_to_d17(self, empty_project):
+    def test_check_ids_are_d01_to_d20(self, empty_project):
         result = run_checks(empty_project)
         ids = {c.id for c in result.checks}
-        expected = {f"D{i:02d}" for i in range(1, 18)}
+        expected = {f"D{i:02d}" for i in range(1, 21)}
         assert ids == expected
 
 
@@ -194,6 +229,7 @@ class TestRunChecksInitialized:
         assert d02.status == "PASS"
 
     def test_d03_pass_after_init(self, initialized_project):
+        """STATE.md should be present and D03 should PASS after init."""
         result = run_checks(initialized_project)
         d03 = next(c for c in result.checks if c.id == "D03")
         assert d03.status == "PASS"
@@ -204,35 +240,54 @@ class TestRunChecksInitialized:
         d04 = next(c for c in result.checks if c.id == "D04")
         assert d04.status == "PASS"
 
-    def test_d08_pass_after_init(self, initialized_project):
+    def test_d08_pass_tasks_dir_after_init(self, initialized_project):
+        """tasks/ directory should be present after init."""
         result = run_checks(initialized_project)
         d08 = next(c for c in result.checks if c.id == "D08")
         assert d08.status == "PASS"
 
-    def test_core_skills_pass_after_init(self, initialized_project):
-        """All 6 core skills should be PASS after init."""
+    def test_d09_pass_archive_dir_after_init(self, initialized_project):
+        """archive/ directory should be present after init."""
         result = run_checks(initialized_project)
-        core_check_ids = {"D09", "D10", "D11", "D12", "D13", "D14"}
+        d09 = next(c for c in result.checks if c.id == "D09")
+        assert d09.status == "PASS"
+
+    def test_d10_pass_after_init(self, initialized_project):
+        """Skills dir should be present after init."""
+        result = run_checks(initialized_project)
+        d10 = next(c for c in result.checks if c.id == "D10")
+        assert d10.status == "PASS"
+
+    def test_core_skills_pass_after_init(self, initialized_project):
+        """All 6 core skills should be PASS after init (D11-D16)."""
+        result = run_checks(initialized_project)
+        core_check_ids = {"D11", "D12", "D13", "D14", "D15", "D16"}
         for check in result.checks:
             if check.id in core_check_ids:
                 assert check.status == "PASS", (
                     f"Check {check.id} ({check.name}) should PASS but got {check.status}: {check.message}"
                 )
 
-    def test_d15_pass_no_legacy_dcbp_dir(self, initialized_project):
-        result = run_checks(initialized_project)
-        d15 = next(c for c in result.checks if c.id == "D15")
-        assert d15.status == "PASS"
-
-    def test_d16_pass_no_legacy_scripts(self, initialized_project):
-        result = run_checks(initialized_project)
-        d16 = next(c for c in result.checks if c.id == "D16")
-        assert d16.status == "PASS"
-
-    def test_d17_pass_no_global_skills(self, initialized_project, fake_home):
+    def test_d17_pass_no_legacy_dcbp_dir(self, initialized_project):
         result = run_checks(initialized_project)
         d17 = next(c for c in result.checks if c.id == "D17")
         assert d17.status == "PASS"
+
+    def test_d18_pass_no_legacy_scripts(self, initialized_project):
+        result = run_checks(initialized_project)
+        d18 = next(c for c in result.checks if c.id == "D18")
+        assert d18.status == "PASS"
+
+    def test_d19_pass_no_progress_md(self, initialized_project):
+        """New installs should NOT have PROGRESS.md — D19 should PASS."""
+        result = run_checks(initialized_project)
+        d19 = next(c for c in result.checks if c.id == "D19")
+        assert d19.status == "PASS"
+
+    def test_d20_pass_no_global_skills(self, initialized_project, fake_home):
+        result = run_checks(initialized_project)
+        d20 = next(c for c in result.checks if c.id == "D20")
+        assert d20.status == "PASS"
 
 
 # ===========================================================================
@@ -240,31 +295,40 @@ class TestRunChecksInitialized:
 # ===========================================================================
 
 class TestRunChecksLegacy:
-    def test_d15_warning_when_legacy_dcbp_dir_exists(self, initialized_project):
+    def test_d17_warning_when_legacy_dcbp_dir_exists(self, initialized_project):
         legacy = initialized_project / ".dcbp"
         legacy.mkdir()
         result = run_checks(initialized_project)
-        d15 = next(c for c in result.checks if c.id == "D15")
-        assert d15.status == "WARNING"
+        d17 = next(c for c in result.checks if c.id == "D17")
+        assert d17.status == "WARNING"
 
-    def test_d16_warning_when_legacy_scripts_present(self, initialized_project):
+    def test_d18_warning_when_legacy_scripts_present(self, initialized_project):
         scripts_dir = initialized_project / ".claude" / "dcbp" / "scripts"
         scripts_dir.mkdir(parents=True, exist_ok=True)
         (scripts_dir / "init_task.py").write_text("# legacy script", encoding="utf-8")
         result = run_checks(initialized_project)
-        d16 = next(c for c in result.checks if c.id == "D16")
-        assert d16.status == "WARNING"
-        assert "init_task.py" in d16.message
+        d18 = next(c for c in result.checks if c.id == "D18")
+        assert d18.status == "WARNING"
+        assert "init_task.py" in d18.message
 
-    def test_d16_pass_when_scripts_dir_exists_but_no_legacy_files(self, initialized_project):
+    def test_d18_pass_when_scripts_dir_exists_but_no_legacy_files(self, initialized_project):
         scripts_dir = initialized_project / ".claude" / "dcbp" / "scripts"
         scripts_dir.mkdir(parents=True, exist_ok=True)
         (scripts_dir / "some_other_script.py").write_text("# not legacy", encoding="utf-8")
         result = run_checks(initialized_project)
-        d16 = next(c for c in result.checks if c.id == "D16")
-        assert d16.status == "PASS"
+        d18 = next(c for c in result.checks if c.id == "D18")
+        assert d18.status == "PASS"
 
-    def test_d17_warning_when_global_owned_skills_present(self, initialized_project, fake_home):
+    def test_d19_warning_when_progress_md_present(self, initialized_project):
+        """D19 should be WARNING if PROGRESS.md is found (legacy project)."""
+        progress = initialized_project / ".claude" / "dcbp" / "PROGRESS.md"
+        progress.write_text("# Legacy progress\n\n## [2024-01-01] Session\n", encoding="utf-8")
+        result = run_checks(initialized_project)
+        d19 = next(c for c in result.checks if c.id == "D19")
+        assert d19.status == "WARNING"
+        assert "STATE.md" in d19.message
+
+    def test_d20_warning_when_global_owned_skills_present(self, initialized_project, fake_home):
         global_skills = fake_home / ".claude" / "skills"
         global_skills.mkdir(parents=True)
         owned_dir = global_skills / "start"
@@ -274,11 +338,11 @@ class TestRunChecksLegacy:
             encoding="utf-8"
         )
         result = run_checks(initialized_project)
-        d17 = next(c for c in result.checks if c.id == "D17")
-        assert d17.status == "WARNING"
-        assert "start" in d17.message
+        d20 = next(c for c in result.checks if c.id == "D20")
+        assert d20.status == "WARNING"
+        assert "start" in d20.message
 
-    def test_d17_pass_when_global_skills_has_only_unknown(self, initialized_project, fake_home):
+    def test_d20_pass_when_global_skills_has_only_unknown(self, initialized_project, fake_home):
         global_skills = fake_home / ".claude" / "skills"
         global_skills.mkdir(parents=True)
         unknown_dir = global_skills / "my_custom"
@@ -288,8 +352,8 @@ class TestRunChecksLegacy:
             encoding="utf-8"
         )
         result = run_checks(initialized_project)
-        d17 = next(c for c in result.checks if c.id == "D17")
-        assert d17.status == "PASS"
+        d20 = next(c for c in result.checks if c.id == "D20")
+        assert d20.status == "PASS"
 
 
 # ===========================================================================
@@ -318,6 +382,20 @@ class TestRunChecksMissingOptional:
         d07 = next(c for c in result.checks if c.id == "D07")
         assert d07.status == "WARNING"
 
+    def test_d08_warning_when_tasks_dir_missing(self, initialized_project):
+        tasks_dir = initialized_project / ".claude" / "dcbp" / "tasks"
+        shutil.rmtree(tasks_dir)
+        result = run_checks(initialized_project)
+        d08 = next(c for c in result.checks if c.id == "D08")
+        assert d08.status == "WARNING"
+
+    def test_d09_warning_when_archive_dir_missing(self, initialized_project):
+        archive_dir = initialized_project / ".claude" / "dcbp" / "archive"
+        shutil.rmtree(archive_dir)
+        result = run_checks(initialized_project)
+        d09 = next(c for c in result.checks if c.id == "D09")
+        assert d09.status == "WARNING"
+
 
 # ===========================================================================
 # Tests: run_checks — missing core skills
@@ -328,9 +406,9 @@ class TestRunChecksMissingCoreSkills:
         dev_skill = initialized_project / ".claude" / "skills" / "dev"
         shutil.rmtree(dev_skill)
         result = run_checks(initialized_project)
-        d11 = next(c for c in result.checks if c.id == "D11")
-        assert d11.status == "WARNING"
-        assert "dev" in d11.message
+        d13 = next(c for c in result.checks if c.id == "D13")
+        assert d13.status == "WARNING"
+        assert "dev" in d13.message
 
     def test_third_party_core_skill_is_warning(self, initialized_project):
         """A core skill dir owned by third party should be WARNING, not ERROR."""
@@ -342,16 +420,16 @@ class TestRunChecksMissingCoreSkills:
             encoding="utf-8"
         )
         result = run_checks(initialized_project)
-        d11 = next(c for c in result.checks if c.id == "D11")
-        assert d11.status == "WARNING"
-        assert "UNKNOWN" in d11.message
+        d13 = next(c for c in result.checks if c.id == "D13")
+        assert d13.status == "WARNING"
+        assert "UNKNOWN" in d13.message
 
-    def test_d08_warning_when_skills_dir_absent(self, initialized_project):
+    def test_d10_warning_when_skills_dir_absent(self, initialized_project):
         skills_dir = initialized_project / ".claude" / "skills"
         shutil.rmtree(skills_dir)
         result = run_checks(initialized_project)
-        d08 = next(c for c in result.checks if c.id == "D08")
-        assert d08.status == "WARNING"
+        d10 = next(c for c in result.checks if c.id == "D10")
+        assert d10.status == "WARNING"
 
 
 # ===========================================================================
@@ -408,6 +486,11 @@ class TestDoctorReadOnly:
 
         snapshot_after = self._snapshot_dir(fake_home)
         assert snapshot_before == snapshot_after, "Doctor modified home directory"
+
+    def test_doctor_total_check_count(self, initialized_project):
+        """Doctor emits exactly 20 checks in Memory v2."""
+        result = run_checks(initialized_project)
+        assert len(result.checks) == 20
 
 
 # ===========================================================================

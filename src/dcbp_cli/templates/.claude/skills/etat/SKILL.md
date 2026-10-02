@@ -12,13 +12,13 @@ Affiche un résumé complet de l'état du projet.
 ## Workflow
 
 ### Phase 1: Collect
-1. Lire `.claude/dcbp/PROJECT.md` - contexte général
-2. Lire `.claude/dcbp/PROGRESS.md` - dernières sessions
-3. Lire `.claude/dcbp/TASKS.md` - état du backlog
-4. Lire `.claude/dcbp/ISSUES.md` - bugs ouverts
+1. Lire `.claude/dcbp/STATE.md` - état courant, objectif, blockers
+2. Lire `.claude/dcbp/TASKS.md` - état du backlog
+3. Lire `.claude/dcbp/ISSUES.md` - bugs ouverts
+4. Lire `.claude/dcbp/PROJECT.md` - contexte général si nécessaire
 
 ### Phase 2: Summarize
-1. Résumer l'état actuel du projet
+1. Résumer l'état actuel du projet depuis STATE.md
 2. Lister les tâches en cours
 3. Lister les blocages éventuels
 4. Suggérer les prochaines actions
@@ -28,9 +28,10 @@ Affiche un résumé complet de l'état du projet.
 ```markdown
 ## Status: [nom projet]
 
-### Dernière activité
-- Date: ...
-- Résumé: ...
+### État courant
+- Phase: ...
+- Statut: ...
+- Objectif: ...
 
 ### En cours
 - [ ] Tâche 1

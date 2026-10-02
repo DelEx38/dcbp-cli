@@ -41,4 +41,4 @@ Investigation et correction de bugs.
 1. Vérifier que le bug est corrigé
 2. Exécuter les tests
 3. Mettre à jour ISSUES.md
-4. Mettre à jour PROGRESS.md
+4. Mettre à jour STATE.md (prochaine action)

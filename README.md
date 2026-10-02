@@ -207,11 +207,12 @@ mon-projet/
     │   └── archive/SKILL.md     # Archivage de PROGRESS.md
     └── dcbp/
         ├── PROJECT.md           # [EDITER] Configuration projet
-        ├── PROGRESS.md          # Journal des sessions
-        ├── TASKS.md             # Backlog et taches
+        ├── STATE.md             # Etat courant compact du projet
+        ├── TASKS.md             # Index du travail
         ├── ISSUES.md            # Bugs et dette technique
         ├── DECISIONS.md         # Decisions architecturales
-        ├── archive/             # Sessions archivees (via /archive)
+        ├── tasks/               # Contrats de taches (DEV-XXX.md)
+        ├── archive/             # Sessions archivees (legacy /archive)
         └── output/              # Fichiers generes (optionnel)
 ```
 
@@ -403,7 +404,7 @@ Le skill `/dev` suit une methodologie en **7 phases** inspiree d'APEX :
 **But** : Comprendre le codebase existant.
 
 - Lit PROJECT.md pour le contexte projet
-- Lit PROGRESS.md pour l'historique recent
+- Lit STATE.md pour l'etat courant
 - Analyse les fichiers pertinents
 - Identifie les patterns existants
 
@@ -464,7 +465,7 @@ Le skill `/dev` suit une methodologie en **7 phases** inspiree d'APEX :
 ### Phase 6 : Complete
 **But** : Finaliser et mettre a jour la memoire.
 
-- Met a jour PROGRESS.md avec le travail effectue
+- Met a jour STATE.md (etat courant) et tasks/DEV-XXX.md
 - Met a jour TASKS.md (tache completee)
 - Ajoute les decisions dans DECISIONS.md si necessaire
 - Genere un resume de session
@@ -728,14 +729,17 @@ dcbp doctor -p /path  # Verifie un projet specifique
 |----|-------|-----------------|
 | D01 | `.claude/dcbp/` present | ERROR |
 | D02 | `PROJECT.md` present et lisible | ERROR |
-| D03 | `PROGRESS.md` present et lisible | ERROR |
+| D03 | `STATE.md` present et lisible | ERROR |
 | D04 | `CLAUDE.md` a la racine | WARNING |
 | D05–D07 | `TASKS.md`, `ISSUES.md`, `DECISIONS.md` | WARNING |
-| D08 | `.claude/skills/` present | WARNING |
-| D09–D14 | 6 core skills (archive, bugfix, dev, etat, review, start) | WARNING |
-| D15 | Absence de legacy `.dcbp/` | WARNING |
-| D16 | Absence de scripts legacy | WARNING |
-| D17 | Absence de skills DCBP dans `~/.claude/skills/` | WARNING |
+| D08 | `tasks/` present | WARNING |
+| D09 | `archive/` present | WARNING |
+| D10 | `.claude/skills/` present | WARNING |
+| D11–D16 | 6 core skills (archive, bugfix, dev, etat, review, start) | WARNING |
+| D17 | Absence de legacy `.dcbp/` | WARNING |
+| D18 | Absence de scripts legacy | WARNING |
+| D19 | `PROGRESS.md` absent (Memory v2) | WARNING si present |
+| D20 | Absence de skills DCBP dans `~/.claude/skills/` | WARNING |
 
 ### Codes de sortie
 
@@ -766,7 +770,7 @@ Verifiez que :
 
 1. Lancez `/start` en debut de session
 2. Verifiez que PROJECT.md est bien rempli
-3. Assurez-vous que PROGRESS.md contient l'historique recent
+3. Assurez-vous que STATE.md contient l'etat courant
 
 ---
 

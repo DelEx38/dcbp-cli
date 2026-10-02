@@ -6,9 +6,13 @@ argument-hint: "[nombre_sessions_a_garder]"
 allowed-tools: Read, Edit, Write
 ---
 
-# /archive - Archivage de PROGRESS.md
+# /archive - Archivage de PROGRESS.md (legacy)
 
-Archive les anciennes sessions pour garder PROGRESS.md léger et économiser des tokens.
+Archive les anciennes sessions de PROGRESS.md pour garder ce fichier léger et économiser des tokens.
+
+> **Note Memory v2** : PROGRESS.md est un fichier legacy. Les nouveaux projets utilisent STATE.md
+> et le dossier tasks/ à la place. Ce skill reste disponible pour les projets existants qui
+> conservent encore PROGRESS.md. Si PROGRESS.md est absent, ce skill n'a rien à faire.
 
 ## Usage
 

@@ -1,30 +1,32 @@
 # Contexte Projet
 
-> Ce fichier définit le cadre du projet. Mets-le à jour quand le projet évolue.
+> Document central du projet. Décrit le QUOI du produit et ses choix structurants durables.
+> Ne pas utiliser pour l'état courant (→ STATE.md), les tâches (→ TASKS.md/tasks/), ou l'historique.
 
-## Informations générales
+## 1. Informations générales
 
 - **Nom** : [À compléter]
 - **Description** : [À compléter]
-- **Démarré le** : [Date]
+- **Vision** : [À compléter]
+- **Objectifs** : [À compléter]
+- **Utilisateurs / cas d'usage** : [À compléter]
 
-## Stack technique
+## 2. Stack technique
 
-### Langages
-- [À compléter]
+- **Langages** : [À compléter]
+- **Frameworks** : [À compléter]
+- **Base de données** : [À compléter]
+- **UI** : [À compléter]
+- **Infrastructure** : [À compléter]
+- **Tooling** : [À compléter]
+- **Tests** : [À compléter]
 
-### Frameworks
-- [À compléter]
+## 3. Architecture
 
-### Base de données
-- [À compléter]
+### Vue générale
+[À compléter]
 
-### Outils
-- [À compléter]
-
-## Architecture
-
-### Structure
+### Structure du repository
 ```
 project/
 ├── src/
@@ -32,51 +34,54 @@ project/
 └── ...
 ```
 
-### Patterns
+### Flux principaux
+[À compléter]
+
+## 4. Fonctionnalités
+
+### Actuelles
+- [Feature 1]
+
+### Planifiées
+- [Feature 2]
+
+### Hors scope
+- [Ce que ce projet ne fait PAS]
+
+## 5. Conventions
+
+### Code
 - [À compléter]
 
-## Conventions
+### Git
+- [À compléter]
 
 ### Nommage
-- Variables : `snake_case` ou `camelCase`
-- Classes : `PascalCase`
+- Variables : [convention]
+- Classes : [convention]
 - Fichiers : [convention]
-
-### Style
-- Formatter : [outil]
-- Linter : [outil]
 
 ### Tests
 - Framework : [outil]
 - Convention : `test_<fonction>_<scenario>`
 
-## Validation
-
-Commandes à exécuter pour valider le code :
+## 6. Validation
 
 ```bash
-# Lint
-[commande]
-
-# Type check
-[commande]
-
 # Tests
+[commande]
+
+# Lint
 [commande]
 
 # Build
 [commande]
 ```
 
-## Points d'attention
+## 7. Contraintes
 
-### À faire systématiquement
-- [Règle 1]
-- [Règle 2]
+- [À compléter]
 
-### À éviter
-- [Anti-pattern 1]
-- [Anti-pattern 2]
+## 8. Points d'attention
 
-### Zones sensibles
-- [Zone 1] : [Pourquoi]
+- [À compléter]

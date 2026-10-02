@@ -48,7 +48,7 @@
 | `/bugfix <bug>` | Investigation et correction de bugs |
 | `/review <cible>` | Revue de code |
 | `/etat` | Vue d'ensemble du projet DCBP |
-| `/archive [n]` | Archiver PROGRESS.md (garde n sessions, défaut: 5) |
+| `/archive [n]` | Archiver PROGRESS.md legacy (projets existants uniquement) |
 
 ### Flags communs
 - `-a` : Mode autonome (pas de confirmations)
@@ -58,11 +58,12 @@
 
 | Fichier | Contenu |
 |---------|---------|
-| `PROJECT.md` | Stack, conventions, architecture |
-| `PROGRESS.md` | Journal des sessions |
-| `TASKS.md` | Backlog et TODO |
-| `ISSUES.md` | Bugs et dette technique |
-| `DECISIONS.md` | Décisions architecturales |
+| `PROJECT.md` | Stack, technologies, architecture, fonctionnalités, règles |
+| `STATE.md` | État courant compact du projet |
+| `TASKS.md` | Index du travail |
+| `tasks/DEV-XXX.md` | Contexte et contrat d'une tâche active |
+| `ISSUES.md` | Problèmes ouverts |
+| `DECISIONS.md` | Décisions durables et leur justification |
 
 ## Règles
 
