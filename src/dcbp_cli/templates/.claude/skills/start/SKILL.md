@@ -13,13 +13,14 @@ Lance une nouvelle session de travail avec tout le contexte nécessaire.
 
 ### Phase 1: Charger le contexte
 1. Lire `.claude/dcbp/PROJECT.md` - Stack, architecture, conventions
-2. Lire `.claude/dcbp/PROGRESS.md` - Dernières sessions (2-3 dernières)
-3. Lire `.claude/dcbp/TASKS.md` - Backlog et tâches en cours
-4. Lire `.claude/dcbp/ISSUES.md` - Bugs et dette technique
-5. Lire `.claude/dcbp/DECISIONS.md` - Décisions architecturales
+2. Lire `.claude/dcbp/STATE.md` - État courant, objectif actif, blockers
+3. Lire `.claude/dcbp/TASKS.md` - Index des tâches en cours
+4. Si une tâche active est mentionnée dans STATE.md, lire `.claude/dcbp/tasks/DEV-XXX.md`
+5. Lire `.claude/dcbp/ISSUES.md` - Bugs et dette technique
+6. Lire `.claude/dcbp/DECISIONS.md` - Décisions architecturales
 
 ### Phase 2: Analyser
-1. Extraire la dernière session et prochaines étapes
+1. Extraire l'objectif courant et la tâche active depuis STATE.md
 2. Compter les tâches (en cours / à faire / terminées)
 3. Identifier les bugs critiques/majeurs
 4. Noter les décisions récentes
@@ -39,17 +40,17 @@ Générer un rapport au format suivant :
 
 ───────────────────────────────────────────────────────────────
 
-## Dernière session
+## État courant
 
-**[date]** - [titre]
+**Phase** : [phase]
+**Statut** : [statut]
+**Objectif** : [objectif actuel]
 
-### Ce qui a été fait
-- [point 1]
-- [point 2]
+───────────────────────────────────────────────────────────────
 
-### Prochaines étapes suggérées
-→ [étape 1]
-→ [étape 2]
+## Tâche active
+
+[DEV-XXX — titre, ou "Aucune"]
 
 ───────────────────────────────────────────────────────────────
 

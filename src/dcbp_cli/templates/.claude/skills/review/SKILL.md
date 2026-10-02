@@ -35,7 +35,7 @@ Revue de code structurée.
 1. Générer le rapport de revue
 2. Calculer le score de qualité
 3. Mettre à jour ISSUES.md si problèmes critiques
-4. Mettre à jour PROGRESS.md
+4. Mettre à jour STATE.md si impact sur l'état courant
 
 ## Classification des problèmes
 
