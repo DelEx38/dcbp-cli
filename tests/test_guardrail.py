@@ -154,29 +154,19 @@ class TestPushAllowedWithValidAuth:
 
         assert not auth_file.exists(), "Authorization file must be consumed after use"
 
-    def test_push_allowed_with_only_branch(self, push_guard, tmp_path):
+    def test_push_allowed_with_full_hash(self, push_guard, tmp_path):
+        """Valid auth with long full-hash head — must ALLOW."""
         auth_file = tmp_path / ".push_auth"
-        auth_file.write_text("branch=feat/my-feature\n", encoding="utf-8")
+        auth_file.write_text(
+            "branch=feat/my-feature\nhead=deadbeef1234567\n", encoding="utf-8"
+        )
 
         with patch.object(
             push_guard.subprocess, "check_output",
-            side_effect=["feat/my-feature\n", "deadbeef12345\n"]
+            side_effect=["feat/my-feature\n", "deadbeef1234567890abc\n"]
         ):
             allowed, _ = push_guard.check_push_authorization(
                 "git push origin feat/my-feature", auth_file=auth_file
-            )
-        assert allowed is True
-
-    def test_push_allowed_with_only_head(self, push_guard, tmp_path):
-        auth_file = tmp_path / ".push_auth"
-        auth_file.write_text("head=deadbeef\n", encoding="utf-8")
-
-        with patch.object(
-            push_guard.subprocess, "check_output",
-            side_effect=["main\n", "deadbeef12345678\n"]
-        ):
-            allowed, _ = push_guard.check_push_authorization(
-                "git push", auth_file=auth_file
             )
         assert allowed is True
 
@@ -188,11 +178,11 @@ class TestPushAllowedWithValidAuth:
 class TestAuthContextMismatch:
     def test_wrong_branch_blocks_push(self, push_guard, tmp_path):
         auth_file = tmp_path / ".push_auth"
-        auth_file.write_text("branch=main\nhead=abc123\n", encoding="utf-8")
+        auth_file.write_text("branch=main\nhead=abc12345\n", encoding="utf-8")
 
         with patch.object(
             push_guard.subprocess, "check_output",
-            side_effect=["feat/other-branch\n", "abc123def456\n"]
+            side_effect=["feat/other-branch\n", "abc12345def456\n"]
         ):
             allowed, msg = push_guard.check_push_authorization(
                 "git push origin feat/other-branch", auth_file=auth_file
@@ -202,7 +192,7 @@ class TestAuthContextMismatch:
 
     def test_wrong_head_blocks_push(self, push_guard, tmp_path):
         auth_file = tmp_path / ".push_auth"
-        auth_file.write_text("branch=main\nhead=abc123\n", encoding="utf-8")
+        auth_file.write_text("branch=main\nhead=abc1234\n", encoding="utf-8")
 
         with patch.object(
             push_guard.subprocess, "check_output",
@@ -216,11 +206,11 @@ class TestAuthContextMismatch:
     def test_auth_consumed_on_mismatch(self, push_guard, tmp_path):
         """Authorization is consumed (deleted) even on mismatch — cannot retry."""
         auth_file = tmp_path / ".push_auth"
-        auth_file.write_text("branch=main\nhead=abc123\n", encoding="utf-8")
+        auth_file.write_text("branch=main\nhead=abc1234\n", encoding="utf-8")
 
         with patch.object(
             push_guard.subprocess, "check_output",
-            side_effect=["feat/other\n", "deadbeef\n"]
+            side_effect=["feat/other\n", "deadbeef12345\n"]
         ):
             push_guard.check_push_authorization("git push", auth_file=auth_file)
 
@@ -262,23 +252,26 @@ class TestOneTimeUse:
 
 class TestCorruptedAuth:
     def test_push_blocked_when_auth_is_empty(self, push_guard, tmp_path):
-        """Empty auth file has no valid branch/head — should still allow (no constraints)."""
+        """Empty auth file has no branch/head — both required → BLOCK."""
         auth_file = tmp_path / ".push_auth"
         auth_file.write_text("", encoding="utf-8")
 
-        with patch.object(
-            push_guard.subprocess, "check_output",
-            side_effect=["main\n", "abc123def456\n"]
-        ):
-            # No branch/head constraints → allowed
-            allowed, _ = push_guard.check_push_authorization(
-                "git push origin main", auth_file=auth_file
-            )
-        assert allowed is True
+        allowed, msg = push_guard.check_push_authorization(
+            "git push origin main", auth_file=auth_file
+        )
+        assert allowed is False
+
+    def test_auth_consumed_when_empty(self, push_guard, tmp_path):
+        """Empty auth file is consumed on block."""
+        auth_file = tmp_path / ".push_auth"
+        auth_file.write_text("", encoding="utf-8")
+
+        push_guard.check_push_authorization("git push", auth_file=auth_file)
+        assert not auth_file.exists()
 
     def test_push_blocked_when_git_unavailable(self, push_guard, tmp_path):
         auth_file = tmp_path / ".push_auth"
-        auth_file.write_text("branch=main\n", encoding="utf-8")
+        auth_file.write_text("branch=main\nhead=abc1234\n", encoding="utf-8")
 
         with patch.object(
             push_guard.subprocess, "check_output",
@@ -288,6 +281,109 @@ class TestCorruptedAuth:
                 "git push origin main", auth_file=auth_file
             )
         assert allowed is False
+
+
+# ===========================================================================
+# Tests: both branch AND head are required (Fix-01)
+# ===========================================================================
+
+class TestBothFieldsRequired:
+    def test_branch_only_blocks_push(self, push_guard, tmp_path):
+        """branch without head → BLOCK (head is now required)."""
+        auth_file = tmp_path / ".push_auth"
+        auth_file.write_text("branch=main\n", encoding="utf-8")
+
+        allowed, msg = push_guard.check_push_authorization(
+            "git push origin main", auth_file=auth_file
+        )
+        assert allowed is False
+        assert "head" in msg.lower() or "GUARDRAIL" in msg
+
+    def test_head_only_blocks_push(self, push_guard, tmp_path):
+        """head without branch → BLOCK (branch is now required)."""
+        auth_file = tmp_path / ".push_auth"
+        auth_file.write_text("head=deadbeef\n", encoding="utf-8")
+
+        allowed, msg = push_guard.check_push_authorization(
+            "git push", auth_file=auth_file
+        )
+        assert allowed is False
+        assert "branch" in msg.lower() or "GUARDRAIL" in msg
+
+    def test_head_too_short_4_chars_blocks(self, push_guard, tmp_path):
+        auth_file = tmp_path / ".push_auth"
+        auth_file.write_text("branch=main\nhead=abc4\n", encoding="utf-8")
+
+        allowed, msg = push_guard.check_push_authorization(
+            "git push", auth_file=auth_file
+        )
+        assert allowed is False
+
+    def test_head_too_short_6_chars_blocks(self, push_guard, tmp_path):
+        auth_file = tmp_path / ".push_auth"
+        auth_file.write_text("branch=main\nhead=abc123\n", encoding="utf-8")
+
+        allowed, msg = push_guard.check_push_authorization(
+            "git push", auth_file=auth_file
+        )
+        assert allowed is False
+
+    def test_head_exactly_7_chars_allowed(self, push_guard, tmp_path):
+        """7-char head is the minimum valid length."""
+        auth_file = tmp_path / ".push_auth"
+        auth_file.write_text("branch=main\nhead=abc1234\n", encoding="utf-8")
+
+        with patch.object(
+            push_guard.subprocess, "check_output",
+            side_effect=["main\n", "abc1234def56789\n"]
+        ):
+            allowed, msg = push_guard.check_push_authorization(
+                "git push origin main", auth_file=auth_file
+            )
+        assert allowed is True
+        assert msg == ""
+
+    def test_auth_consumed_on_missing_branch(self, push_guard, tmp_path):
+        auth_file = tmp_path / ".push_auth"
+        auth_file.write_text("head=abc1234567\n", encoding="utf-8")
+
+        push_guard.check_push_authorization("git push", auth_file=auth_file)
+        assert not auth_file.exists()
+
+    def test_auth_consumed_on_missing_head(self, push_guard, tmp_path):
+        auth_file = tmp_path / ".push_auth"
+        auth_file.write_text("branch=main\n", encoding="utf-8")
+
+        push_guard.check_push_authorization("git push", auth_file=auth_file)
+        assert not auth_file.exists()
+
+    def test_auth_consumed_on_head_too_short(self, push_guard, tmp_path):
+        auth_file = tmp_path / ".push_auth"
+        auth_file.write_text("branch=main\nhead=abc12\n", encoding="utf-8")
+
+        push_guard.check_push_authorization("git push", auth_file=auth_file)
+        assert not auth_file.exists()
+
+    def test_error_message_mentions_branch(self, push_guard, tmp_path):
+        auth_file = tmp_path / ".push_auth"
+        auth_file.write_text("head=abc1234567\n", encoding="utf-8")
+
+        _, msg = push_guard.check_push_authorization("git push", auth_file=auth_file)
+        assert "branch" in msg.lower()
+
+    def test_error_message_mentions_head_required(self, push_guard, tmp_path):
+        auth_file = tmp_path / ".push_auth"
+        auth_file.write_text("branch=main\n", encoding="utf-8")
+
+        _, msg = push_guard.check_push_authorization("git push", auth_file=auth_file)
+        assert "head" in msg.lower()
+
+    def test_error_message_mentions_head_too_short(self, push_guard, tmp_path):
+        auth_file = tmp_path / ".push_auth"
+        auth_file.write_text("branch=main\nhead=abc12\n", encoding="utf-8")
+
+        _, msg = push_guard.check_push_authorization("git push", auth_file=auth_file)
+        assert "head" in msg.lower() or "court" in msg.lower()
 
 
 # ===========================================================================

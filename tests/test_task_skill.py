@@ -11,7 +11,13 @@ from dcbp_cli.contract import (
     SETTINGS_FILE,
 )
 from dcbp_cli.doctor import run_checks
-from dcbp_cli.commands import init_project, classify_skill, Ownership
+from dcbp_cli.commands import (
+    init_project,
+    classify_skill,
+    Ownership,
+    update_templates,
+    _merge_dcbp_hook_into_settings,
+)
 
 
 # ===========================================================================
@@ -208,3 +214,185 @@ class TestDoctorFullNewInstall:
             if c.status != "PASS"
         ]
         assert not failures, f"Expected all PASS but got:\n" + "\n".join(failures)
+
+
+# ===========================================================================
+# Tests: settings.json conservative merge (Fix-01)
+# ===========================================================================
+
+class TestSettingsMigration:
+    """Tests for _merge_dcbp_hook_into_settings and update_templates behavior."""
+
+    def _dcbp_path(self, tmp_path: Path) -> Path:
+        return tmp_path / ".claude" / "dcbp"
+
+    # ── _merge_dcbp_hook_into_settings ──────────────────────────────────────
+
+    def test_merge_adds_hook_when_no_hooks_key(self, tmp_path):
+        """settings.json with no 'hooks' key → hook added."""
+        settings = tmp_path / "settings.json"
+        settings.write_text('{"theme": "dark"}', encoding="utf-8")
+
+        result = _merge_dcbp_hook_into_settings(settings)
+        assert result == "added"
+
+        data = json.loads(settings.read_text(encoding="utf-8"))
+        cmds = [
+            h.get("command", "")
+            for entry in data["hooks"]["PreToolUse"]
+            for h in entry.get("hooks", [])
+        ]
+        assert any("push_guard" in c for c in cmds)
+
+    def test_merge_adds_hook_to_empty_pre_tool_use(self, tmp_path):
+        """settings.json with empty PreToolUse list → hook added."""
+        settings = tmp_path / "settings.json"
+        settings.write_text('{"hooks": {"PreToolUse": []}}', encoding="utf-8")
+
+        result = _merge_dcbp_hook_into_settings(settings)
+        assert result == "added"
+
+        data = json.loads(settings.read_text(encoding="utf-8"))
+        assert len(data["hooks"]["PreToolUse"]) == 1
+
+    def test_merge_detects_already_present(self, tmp_path):
+        """Hook already present → returns 'already_present', no duplicate added."""
+        existing = {
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Bash",
+                        "hooks": [
+                            {"type": "command", "command": "python .claude/dcbp/guardrail/push_guard.py"}
+                        ],
+                    }
+                ]
+            }
+        }
+        settings = tmp_path / "settings.json"
+        settings.write_text(json.dumps(existing), encoding="utf-8")
+
+        result = _merge_dcbp_hook_into_settings(settings)
+        assert result == "already_present"
+
+        data = json.loads(settings.read_text(encoding="utf-8"))
+        assert len(data["hooks"]["PreToolUse"]) == 1, "No duplicate must be added"
+
+    def test_merge_idempotent_double_call(self, tmp_path):
+        """Calling merge twice results in exactly one DCBP hook."""
+        settings = tmp_path / "settings.json"
+        settings.write_text('{"hooks": {"PreToolUse": []}}', encoding="utf-8")
+
+        _merge_dcbp_hook_into_settings(settings)
+        result2 = _merge_dcbp_hook_into_settings(settings)
+        assert result2 == "already_present"
+
+        data = json.loads(settings.read_text(encoding="utf-8"))
+        assert len(data["hooks"]["PreToolUse"]) == 1
+
+    def test_merge_preserves_existing_hooks(self, tmp_path):
+        """Other hooks are preserved unchanged when DCBP hook is added."""
+        existing = {
+            "hooks": {
+                "PreToolUse": [
+                    {
+                        "matcher": "Edit",
+                        "hooks": [{"type": "command", "command": "echo hello"}],
+                    }
+                ]
+            }
+        }
+        settings = tmp_path / "settings.json"
+        settings.write_text(json.dumps(existing), encoding="utf-8")
+
+        _merge_dcbp_hook_into_settings(settings)
+
+        data = json.loads(settings.read_text(encoding="utf-8"))
+        entries = data["hooks"]["PreToolUse"]
+        assert len(entries) == 2
+        matchers = [e.get("matcher") for e in entries]
+        assert "Edit" in matchers
+
+    def test_merge_preserves_malformed_json(self, tmp_path):
+        """Malformed JSON is never overwritten — preserves the file."""
+        bad_content = "{ not valid json !!!"
+        settings = tmp_path / "settings.json"
+        settings.write_text(bad_content, encoding="utf-8")
+
+        result = _merge_dcbp_hook_into_settings(settings)
+        assert result == "preserved_malformed"
+        assert settings.read_text(encoding="utf-8") == bad_content
+
+    def test_merge_preserves_non_dict_json(self, tmp_path):
+        """JSON that is not an object (e.g., array) is preserved unchanged."""
+        settings = tmp_path / "settings.json"
+        settings.write_text('["array", "not", "object"]', encoding="utf-8")
+
+        result = _merge_dcbp_hook_into_settings(settings)
+        assert result == "preserved_malformed"
+
+    # ── update_templates behavior ────────────────────────────────────────────
+
+    def test_update_merges_hook_into_existing_settings(self, tmp_path):
+        """dcbp update must add DCBP hook into existing settings.json."""
+        # First install without settings (simulate old install)
+        init_project(tmp_path, skip_questions=True)
+        settings = tmp_path / ".claude" / "settings.json"
+
+        # Overwrite with custom settings (no hook)
+        settings.write_text('{"theme": "dark"}', encoding="utf-8")
+
+        # Now run update
+        update_templates(tmp_path)
+
+        data = json.loads(settings.read_text(encoding="utf-8"))
+        # Theme preserved
+        assert data.get("theme") == "dark"
+        # Hook added
+        cmds = [
+            h.get("command", "")
+            for entry in data.get("hooks", {}).get("PreToolUse", [])
+            for h in entry.get("hooks", [])
+        ]
+        assert any("push_guard" in c for c in cmds)
+
+    def test_update_does_not_duplicate_existing_hook(self, tmp_path):
+        """Running update twice must not duplicate the DCBP hook."""
+        init_project(tmp_path, skip_questions=True)
+
+        update_templates(tmp_path)
+
+        settings = tmp_path / ".claude" / "settings.json"
+        data = json.loads(settings.read_text(encoding="utf-8"))
+        all_cmds = [
+            h.get("command", "")
+            for entry in data.get("hooks", {}).get("PreToolUse", [])
+            for h in entry.get("hooks", [])
+        ]
+        push_guard_count = sum(1 for c in all_cmds if "push_guard" in c)
+        assert push_guard_count == 1, f"Expected exactly 1 push_guard hook, found {push_guard_count}"
+
+    def test_update_preserves_custom_settings_when_adding_hook(self, tmp_path):
+        """Custom settings keys must survive update merge."""
+        init_project(tmp_path, skip_questions=True)
+        settings = tmp_path / ".claude" / "settings.json"
+        # Add custom key
+        data = json.loads(settings.read_text(encoding="utf-8"))
+        data["custom_key"] = "preserved"
+        settings.write_text(json.dumps(data), encoding="utf-8")
+
+        update_templates(tmp_path)
+
+        result = json.loads(settings.read_text(encoding="utf-8"))
+        assert result.get("custom_key") == "preserved"
+
+    def test_update_preserves_malformed_settings(self, tmp_path):
+        """Malformed settings.json must not be overwritten by update."""
+        init_project(tmp_path, skip_questions=True)
+        settings = tmp_path / ".claude" / "settings.json"
+        bad = "{ broken json"
+        settings.write_text(bad, encoding="utf-8")
+
+        update_templates(tmp_path)
+
+        assert settings.read_text(encoding="utf-8") == bad

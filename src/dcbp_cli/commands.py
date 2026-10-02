@@ -247,6 +247,102 @@ def _print_migration_report(report: dict, home_skills_path: Path) -> None:
         print("    Rien n'a été modifié.")
 
 
+# ── Hook entry that DCBP injects into .claude/settings.json ────────────────────
+_DCBP_HOOK_ENTRY: dict = {
+    "matcher": "Bash",
+    "hooks": [
+        {
+            "type": "command",
+            "command": "python .claude/dcbp/guardrail/push_guard.py",
+        }
+    ],
+}
+
+_DCBP_HOOK_SIGNATURE = "push_guard"  # substring that identifies our hook
+
+
+def _merge_dcbp_hook_into_settings(settings_path: Path) -> str:
+    """
+    Merge DCBP's PreToolUse hook into an existing .claude/settings.json.
+
+    Rules:
+    - Never overwrite the full file.
+    - Preserve all existing settings and hooks.
+    - Add DCBP hook only if absent.
+    - No-op if already present (idempotent).
+    - If file is malformed / unsafe to merge: leave byte-for-byte unchanged.
+
+    Returns one of:
+        'added'              — hook was added
+        'already_present'    — hook already existed, no change
+        'preserved_malformed'— file could not be parsed; left unchanged
+    """
+    import json as _json
+
+    try:
+        content = settings_path.read_text(encoding="utf-8")
+        data = _json.loads(content)
+    except Exception:
+        return "preserved_malformed"
+
+    if not isinstance(data, dict):
+        return "preserved_malformed"
+
+    # Navigate/create hooks.PreToolUse
+    hooks = data.setdefault("hooks", {})
+    if not isinstance(hooks, dict):
+        return "preserved_malformed"
+
+    pre_hooks = hooks.setdefault("PreToolUse", [])
+    if not isinstance(pre_hooks, list):
+        return "preserved_malformed"
+
+    # Check if DCBP hook already present (any entry referencing push_guard)
+    for entry in pre_hooks:
+        for h in entry.get("hooks", []) if isinstance(entry, dict) else []:
+            if _DCBP_HOOK_SIGNATURE in str(h.get("command", "")):
+                return "already_present"
+
+    # Add the DCBP hook entry
+    pre_hooks.append(_DCBP_HOOK_ENTRY)
+    data["hooks"]["PreToolUse"] = pre_hooks
+
+    settings_path.write_text(
+        _json.dumps(data, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    return "added"
+
+
+def _install_or_merge_settings(
+    settings_dst: Path,
+    settings_src: Path,
+) -> None:
+    """
+    Install or merge .claude/settings.json with DCBP push guardrail hook.
+
+    - If absent: copy template (creates file with hook).
+    - If present: merge hook conservatively; report outcome.
+    """
+    import shutil as _shutil
+
+    if not settings_dst.exists():
+        if settings_src.exists():
+            _shutil.copy2(settings_src, settings_dst)
+            print("[+] Cree .claude/settings.json (guardrail hook)")
+        return
+
+    # Existing file — merge conservatively
+    status = _merge_dcbp_hook_into_settings(settings_dst)
+    if status == "added":
+        print("[+] .claude/settings.json mis a jour (hook guardrail ajoute)")
+    elif status == "already_present":
+        pass  # Idempotent — nothing to report
+    else:  # preserved_malformed
+        print("[!] .claude/settings.json existant non modifie (format non reconnu) "
+              "— ajoutez le hook push_guard manuellement")
+
+
 # =============================================================================
 # Configuration des choix
 # =============================================================================
@@ -671,15 +767,10 @@ def init_project(project_path: Path, force: bool = False, skip_questions: bool =
             shutil.copy2(claude_template, claude_md)
             print("[+] Cree CLAUDE.md")
 
-    # Install .claude/settings.json (push guardrail hook) — only if absent
+    # Install or merge .claude/settings.json (push guardrail hook)
     settings_dst = claude_path / "settings.json"
     settings_src = templates_path / ".claude" / "settings.json"
-    if not settings_dst.exists() and settings_src.exists():
-        import shutil as _shutil
-        _shutil.copy2(settings_src, settings_dst)
-        print("[+] Cree .claude/settings.json (guardrail hook)")
-    elif settings_dst.exists() and not force:
-        pass  # preserve existing settings — user may have customized
+    _install_or_merge_settings(settings_dst, settings_src)
 
     # Génerer PROJECT.md personnalisé
     if not skip_questions:
@@ -807,13 +898,10 @@ def update_templates(project_path: Path) -> bool:
             _shutil.copytree(guardrail_src, guardrail_dst)
             print("[+] Cree guardrail/")
 
-    # Workflow Engine: introduce .claude/settings.json if absent
+    # Workflow Engine: install or merge .claude/settings.json
     settings_dst = claude_path / "settings.json"
     settings_src = templates_path / ".claude" / "settings.json"
-    if not settings_dst.exists() and settings_src.exists():
-        import shutil as _shutil
-        _shutil.copy2(settings_src, settings_dst)
-        print("[+] Cree .claude/settings.json (guardrail hook)")
+    _install_or_merge_settings(settings_dst, settings_src)
 
     print()
     print("[OK] Templates mis a jour!")
