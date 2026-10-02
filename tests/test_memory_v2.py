@@ -195,14 +195,14 @@ class TestUpdateMigration:
 
 
 # ===========================================================================
-# Tests: Doctor D01-D20 on new install
+# Tests: Doctor D01-D23 on new install
 # ===========================================================================
 
 class TestDoctorMemoryV2:
-    def test_doctor_20_checks_on_new_install(self, fresh_project):
-        """Doctor must emit exactly 20 checks on a new install."""
+    def test_doctor_23_checks_on_new_install(self, fresh_project):
+        """Doctor must emit exactly 23 checks (D01-D23) on a new install."""
         result = run_checks(fresh_project)
-        assert len(result.checks) == 20
+        assert len(result.checks) == 23
 
     def test_d03_state_md_pass_on_new_install(self, fresh_project):
         """D03 (STATE.md) must PASS on a new install."""
@@ -216,11 +216,11 @@ class TestDoctorMemoryV2:
         d08 = next(c for c in result.checks if c.id == "D08")
         assert d08.status == "PASS"
 
-    def test_d19_pass_no_progress_md_on_new_install(self, fresh_project):
-        """D19 must PASS (PROGRESS.md absent) on a new install."""
+    def test_d20_pass_no_progress_md_on_new_install(self, fresh_project):
+        """D20 must PASS (PROGRESS.md absent) on a new install."""
         result = run_checks(fresh_project)
-        d19 = next(c for c in result.checks if c.id == "D19")
-        assert d19.status == "PASS"
+        d20 = next(c for c in result.checks if c.id == "D20")
+        assert d20.status == "PASS"
 
     def test_d03_error_when_state_md_missing(self, fresh_project):
         """D03 must ERROR if STATE.md is missing."""
@@ -230,19 +230,19 @@ class TestDoctorMemoryV2:
         d03 = next(c for c in result.checks if c.id == "D03")
         assert d03.status == "ERROR"
 
-    def test_d19_warning_when_progress_md_present(self, fresh_project):
-        """D19 must WARNING if PROGRESS.md exists (legacy indicator)."""
+    def test_d20_warning_when_progress_md_present(self, fresh_project):
+        """D20 must WARNING if PROGRESS.md exists (legacy indicator)."""
         progress = fresh_project / ".claude" / "dcbp" / "PROGRESS.md"
         progress.write_text("# Legacy PROGRESS\n", encoding="utf-8")
         result = run_checks(fresh_project)
-        d19 = next(c for c in result.checks if c.id == "D19")
-        assert d19.status == "WARNING"
+        d20 = next(c for c in result.checks if c.id == "D20")
+        assert d20.status == "WARNING"
 
     def test_all_check_ids_present(self, fresh_project):
-        """All IDs D01-D20 must appear exactly once."""
+        """All IDs D01-D23 must appear exactly once."""
         result = run_checks(fresh_project)
         ids = [c.id for c in result.checks]
-        expected = [f"D{i:02d}" for i in range(1, 21)]
+        expected = [f"D{i:02d}" for i in range(1, 24)]
         assert sorted(ids) == sorted(expected)
         assert len(ids) == len(set(ids)), "Duplicate check IDs found"
 

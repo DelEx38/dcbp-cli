@@ -64,12 +64,12 @@ class TestContract:
     def test_core_skill_names_is_frozenset(self):
         assert isinstance(CORE_SKILL_NAMES, frozenset)
 
-    def test_core_skill_names_has_6_entries(self):
-        assert len(CORE_SKILL_NAMES) == 6
+    def test_core_skill_names_has_7_entries(self):
+        assert len(CORE_SKILL_NAMES) == 7
 
     def test_core_skill_names_content(self):
         assert CORE_SKILL_NAMES == frozenset({
-            "archive", "bugfix", "dev", "etat", "review", "start"
+            "archive", "bugfix", "dev", "etat", "review", "start", "task"
         })
 
     def test_legacy_script_names_is_tuple(self):
@@ -202,14 +202,14 @@ class TestRunChecksUninitialized:
         assert d04.status == "WARNING"
 
     def test_total_check_count(self, empty_project):
-        """Doctor always emits exactly 20 checks."""
+        """Doctor always emits exactly 23 checks (D01-D23)."""
         result = run_checks(empty_project)
-        assert len(result.checks) == 20
+        assert len(result.checks) == 23
 
-    def test_check_ids_are_d01_to_d20(self, empty_project):
+    def test_check_ids_are_d01_to_d23(self, empty_project):
         result = run_checks(empty_project)
         ids = {c.id for c in result.checks}
-        expected = {f"D{i:02d}" for i in range(1, 21)}
+        expected = {f"D{i:02d}" for i in range(1, 24)}
         assert ids == expected
 
 
@@ -259,35 +259,35 @@ class TestRunChecksInitialized:
         assert d10.status == "PASS"
 
     def test_core_skills_pass_after_init(self, initialized_project):
-        """All 6 core skills should be PASS after init (D11-D16)."""
+        """All 7 core skills should be PASS after init (D11-D17)."""
         result = run_checks(initialized_project)
-        core_check_ids = {"D11", "D12", "D13", "D14", "D15", "D16"}
+        core_check_ids = {"D11", "D12", "D13", "D14", "D15", "D16", "D17"}
         for check in result.checks:
             if check.id in core_check_ids:
                 assert check.status == "PASS", (
                     f"Check {check.id} ({check.name}) should PASS but got {check.status}: {check.message}"
                 )
 
-    def test_d17_pass_no_legacy_dcbp_dir(self, initialized_project):
-        result = run_checks(initialized_project)
-        d17 = next(c for c in result.checks if c.id == "D17")
-        assert d17.status == "PASS"
-
-    def test_d18_pass_no_legacy_scripts(self, initialized_project):
+    def test_d18_pass_no_legacy_dcbp_dir(self, initialized_project):
         result = run_checks(initialized_project)
         d18 = next(c for c in result.checks if c.id == "D18")
         assert d18.status == "PASS"
 
-    def test_d19_pass_no_progress_md(self, initialized_project):
-        """New installs should NOT have PROGRESS.md — D19 should PASS."""
+    def test_d19_pass_no_legacy_scripts(self, initialized_project):
         result = run_checks(initialized_project)
         d19 = next(c for c in result.checks if c.id == "D19")
         assert d19.status == "PASS"
 
-    def test_d20_pass_no_global_skills(self, initialized_project, fake_home):
+    def test_d20_pass_no_progress_md(self, initialized_project):
+        """New installs should NOT have PROGRESS.md — D20 should PASS."""
         result = run_checks(initialized_project)
         d20 = next(c for c in result.checks if c.id == "D20")
         assert d20.status == "PASS"
+
+    def test_d21_pass_no_global_skills(self, initialized_project, fake_home):
+        result = run_checks(initialized_project)
+        d21 = next(c for c in result.checks if c.id == "D21")
+        assert d21.status == "PASS"
 
 
 # ===========================================================================
@@ -295,40 +295,40 @@ class TestRunChecksInitialized:
 # ===========================================================================
 
 class TestRunChecksLegacy:
-    def test_d17_warning_when_legacy_dcbp_dir_exists(self, initialized_project):
+    def test_d18_warning_when_legacy_dcbp_dir_exists(self, initialized_project):
         legacy = initialized_project / ".dcbp"
         legacy.mkdir()
         result = run_checks(initialized_project)
-        d17 = next(c for c in result.checks if c.id == "D17")
-        assert d17.status == "WARNING"
+        d18 = next(c for c in result.checks if c.id == "D18")
+        assert d18.status == "WARNING"
 
-    def test_d18_warning_when_legacy_scripts_present(self, initialized_project):
+    def test_d19_warning_when_legacy_scripts_present(self, initialized_project):
         scripts_dir = initialized_project / ".claude" / "dcbp" / "scripts"
         scripts_dir.mkdir(parents=True, exist_ok=True)
         (scripts_dir / "init_task.py").write_text("# legacy script", encoding="utf-8")
         result = run_checks(initialized_project)
-        d18 = next(c for c in result.checks if c.id == "D18")
-        assert d18.status == "WARNING"
-        assert "init_task.py" in d18.message
+        d19 = next(c for c in result.checks if c.id == "D19")
+        assert d19.status == "WARNING"
+        assert "init_task.py" in d19.message
 
-    def test_d18_pass_when_scripts_dir_exists_but_no_legacy_files(self, initialized_project):
+    def test_d19_pass_when_scripts_dir_exists_but_no_legacy_files(self, initialized_project):
         scripts_dir = initialized_project / ".claude" / "dcbp" / "scripts"
         scripts_dir.mkdir(parents=True, exist_ok=True)
         (scripts_dir / "some_other_script.py").write_text("# not legacy", encoding="utf-8")
         result = run_checks(initialized_project)
-        d18 = next(c for c in result.checks if c.id == "D18")
-        assert d18.status == "PASS"
+        d19 = next(c for c in result.checks if c.id == "D19")
+        assert d19.status == "PASS"
 
-    def test_d19_warning_when_progress_md_present(self, initialized_project):
-        """D19 should be WARNING if PROGRESS.md is found (legacy project)."""
+    def test_d20_warning_when_progress_md_present(self, initialized_project):
+        """D20 should be WARNING if PROGRESS.md is found (legacy project)."""
         progress = initialized_project / ".claude" / "dcbp" / "PROGRESS.md"
         progress.write_text("# Legacy progress\n\n## [2024-01-01] Session\n", encoding="utf-8")
         result = run_checks(initialized_project)
-        d19 = next(c for c in result.checks if c.id == "D19")
-        assert d19.status == "WARNING"
-        assert "STATE.md" in d19.message
+        d20 = next(c for c in result.checks if c.id == "D20")
+        assert d20.status == "WARNING"
+        assert "STATE.md" in d20.message
 
-    def test_d20_warning_when_global_owned_skills_present(self, initialized_project, fake_home):
+    def test_d21_warning_when_global_owned_skills_present(self, initialized_project, fake_home):
         global_skills = fake_home / ".claude" / "skills"
         global_skills.mkdir(parents=True)
         owned_dir = global_skills / "start"
@@ -338,11 +338,11 @@ class TestRunChecksLegacy:
             encoding="utf-8"
         )
         result = run_checks(initialized_project)
-        d20 = next(c for c in result.checks if c.id == "D20")
-        assert d20.status == "WARNING"
-        assert "start" in d20.message
+        d21 = next(c for c in result.checks if c.id == "D21")
+        assert d21.status == "WARNING"
+        assert "start" in d21.message
 
-    def test_d20_pass_when_global_skills_has_only_unknown(self, initialized_project, fake_home):
+    def test_d21_pass_when_global_skills_has_only_unknown(self, initialized_project, fake_home):
         global_skills = fake_home / ".claude" / "skills"
         global_skills.mkdir(parents=True)
         unknown_dir = global_skills / "my_custom"
@@ -352,8 +352,8 @@ class TestRunChecksLegacy:
             encoding="utf-8"
         )
         result = run_checks(initialized_project)
-        d20 = next(c for c in result.checks if c.id == "D20")
-        assert d20.status == "PASS"
+        d21 = next(c for c in result.checks if c.id == "D21")
+        assert d21.status == "PASS"
 
 
 # ===========================================================================
@@ -488,9 +488,9 @@ class TestDoctorReadOnly:
         assert snapshot_before == snapshot_after, "Doctor modified home directory"
 
     def test_doctor_total_check_count(self, initialized_project):
-        """Doctor emits exactly 20 checks in Memory v2."""
+        """Doctor emits exactly 23 checks (D01-D23) in v0.9.0."""
         result = run_checks(initialized_project)
-        assert len(result.checks) == 20
+        assert len(result.checks) == 23
 
 
 # ===========================================================================

@@ -48,3 +48,6 @@ htmlcov/
 
 # Wheel build artefacts (not part of release)
 dist_audit/*.whl
+
+# DCBP push authorization — local, non-tracked, one-time use
+.claude/dcbp/.push_auth
