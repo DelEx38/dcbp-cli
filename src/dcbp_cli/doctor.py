@@ -14,6 +14,8 @@ from .contract import (
     MEMORY_V2_DIRS,
     LEGACY_FILES,
     LEGACY_SCRIPT_NAMES,
+    GUARDRAIL_SCRIPT,
+    SETTINGS_FILE,
 )
 from .commands import classify_skill, Ownership
 
@@ -27,6 +29,7 @@ _CORE_SKILL_IDS: dict[str, str] = {
     "etat":    "D14",
     "review":  "D15",
     "start":   "D16",
+    "task":    "D17",
 }
 
 
@@ -173,44 +176,44 @@ def run_checks(project_path: Path) -> DoctorResult:
                 checks.append(CheckResult(did, f"Core skill: {skill_name}", "WARNING",
                     f"Skill '{skill_name}' présent mais appartient à un tiers (UNKNOWN) — préservé par DCBP"))
 
-    # ── D17: Legacy .dcbp/ ──────────────────────────────────────────────────
+    # ── D18: Legacy .dcbp/ ──────────────────────────────────────────────────
 
     legacy_root = project_path / ".dcbp"
     if legacy_root.exists():
-        checks.append(CheckResult("D17", "Legacy .dcbp/", "WARNING",
+        checks.append(CheckResult("D18", "Legacy .dcbp/", "WARNING",
             "Structure .dcbp/ legacy détectée — peut être supprimée manuellement"))
     else:
-        checks.append(CheckResult("D17", "Legacy .dcbp/", "PASS",
+        checks.append(CheckResult("D18", "Legacy .dcbp/", "PASS",
             "Absent"))
 
-    # ── D18: Legacy scripts ─────────────────────────────────────────────────
+    # ── D19: Legacy scripts ─────────────────────────────────────────────────
 
     scripts_dir = dcbp_path / "scripts"
     if scripts_dir.is_dir():
         found = [s for s in LEGACY_SCRIPT_NAMES if (scripts_dir / s).exists()]
         if found:
-            checks.append(CheckResult("D18", "Legacy scripts", "WARNING",
+            checks.append(CheckResult("D19", "Legacy scripts", "WARNING",
                 f"Scripts legacy présents: {', '.join(found)} — "
                 "ne font plus partie du contract DCBP. Suppression manuelle possible."))
         else:
-            checks.append(CheckResult("D18", "Legacy scripts", "PASS",
+            checks.append(CheckResult("D19", "Legacy scripts", "PASS",
                 "Aucun script legacy"))
     else:
-        checks.append(CheckResult("D18", "Legacy scripts", "PASS",
+        checks.append(CheckResult("D19", "Legacy scripts", "PASS",
             "Aucun script legacy"))
 
-    # ── D19: PROGRESS.md legacy — informational ────────────────────────────
+    # ── D20: PROGRESS.md legacy — informational ────────────────────────────
 
     progress_md = dcbp_path / "PROGRESS.md"
     if progress_md.is_file():
-        checks.append(CheckResult("D19", "PROGRESS.md (legacy)", "WARNING",
+        checks.append(CheckResult("D20", "PROGRESS.md (legacy)", "WARNING",
             "PROGRESS.md legacy présent — Memory v2 utilise STATE.md. "
             "Migrez manuellement le contenu pertinent puis supprimez-le."))
     else:
-        checks.append(CheckResult("D19", "PROGRESS.md (legacy)", "PASS",
+        checks.append(CheckResult("D20", "PROGRESS.md (legacy)", "PASS",
             "Absent (Memory v2 — correct)"))
 
-    # ── D20: Global ~/.claude/skills/ ──────────────────────────────────────
+    # ── D21: Global ~/.claude/skills/ ──────────────────────────────────────
 
     home_skills = Path.home() / ".claude" / "skills"
     if home_skills.is_dir():
@@ -219,15 +222,55 @@ def run_checks(project_path: Path) -> DoctorResult:
             if entry.is_dir() and classify_skill(entry) == Ownership.OWNED:
                 owned_global.append(entry.name)
         if owned_global:
-            checks.append(CheckResult("D20", "Global skills", "WARNING",
+            checks.append(CheckResult("D21", "Global skills", "WARNING",
                 f"Skills DCBP identifiés dans ~/.claude/skills/: {', '.join(owned_global)}. "
                 "Exécutez dcbp update pour les retirer proprement."))
         else:
-            checks.append(CheckResult("D20", "Global skills", "PASS",
+            checks.append(CheckResult("D21", "Global skills", "PASS",
                 "Aucun skill DCBP identifié dans ~/.claude/skills/"))
     else:
-        checks.append(CheckResult("D20", "Global skills", "PASS",
+        checks.append(CheckResult("D21", "Global skills", "PASS",
             "~/.claude/skills/ absent"))
+
+    # ── D22: Guardrail script ───────────────────────────────────────────────
+
+    guardrail_path = dcbp_path / "guardrail" / "push_guard.py"
+    if guardrail_path.is_file():
+        checks.append(CheckResult("D22", "Guardrail script", "PASS",
+            "push_guard.py présent"))
+    else:
+        checks.append(CheckResult("D22", "Guardrail script", "WARNING",
+            ".claude/dcbp/guardrail/push_guard.py absent — git push non protégé. "
+            "Exécutez: dcbp update"))
+
+    # ── D23: .claude/settings.json hook ────────────────────────────────────
+
+    settings_path = project_path / ".claude" / "settings.json"
+    if settings_path.is_file():
+        try:
+            import json as _json
+            settings_data = _json.loads(settings_path.read_text(encoding="utf-8"))
+            hooks = settings_data.get("hooks", {})
+            pre_hooks = hooks.get("PreToolUse", [])
+            hook_configured = any(
+                "push_guard" in str(h)
+                for entry in pre_hooks
+                for h in entry.get("hooks", [])
+            )
+            if hook_configured:
+                checks.append(CheckResult("D23", "Push hook config", "PASS",
+                    ".claude/settings.json contient le hook push_guard"))
+            else:
+                checks.append(CheckResult("D23", "Push hook config", "WARNING",
+                    ".claude/settings.json présent mais hook push_guard absent — "
+                    "ajoutez le hook PreToolUse manuellement"))
+        except Exception:
+            checks.append(CheckResult("D23", "Push hook config", "WARNING",
+                ".claude/settings.json illisible"))
+    else:
+        checks.append(CheckResult("D23", "Push hook config", "WARNING",
+            ".claude/settings.json absent — hook guardrail non configuré. "
+            "Exécutez: dcbp update"))
 
     return DoctorResult(checks=checks)
 
