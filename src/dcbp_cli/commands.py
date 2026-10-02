@@ -627,6 +627,12 @@ def init_project(project_path: Path, force: bool = False, skip_questions: bool =
             if skills:
                 print(f"    [+] Skills: {', '.join(sorted(skills))}")
 
+        if (dcbp_path / "STATE.md").exists():
+            print("    [+] STATE.md")
+
+        if (dcbp_path / "tasks").exists():
+            print("    [+] Dossier tasks/")
+
         if (dcbp_path / "output").exists():
             print("    [+] Dossier output/")
 
@@ -691,7 +697,7 @@ def init_project(project_path: Path, force: bool = False, skip_questions: bool =
     print("  /bugfix <bug>           - Investigation de bugs")
     print("  /review <cible>         - Revue de code")
     print("  /etat                   - Vue d'ensemble du projet")
-    print("  /archive                - Archiver PROGRESS.md")
+    print("  /archive                - Archiver (sessions legacy)")
     print()
 
     return True
@@ -721,15 +727,17 @@ def update_templates(project_path: Path) -> bool:
     print(f"[*] Mise a jour des templates DCBP vers v{__version__}")
     print()
 
-    # Fichiers a preserver (memoire du projet)
+    # Fichiers a preserver (memoire du projet — jamais ecrases)
     preserve = [
         "PROJECT.md",
         "PROGRESS.md",
+        "STATE.md",
         "TASKS.md",
         "ISSUES.md",
         "DECISIONS.md",
         "output",
         "archive",
+        "tasks",
     ]
 
     # Mettre a jour les skills (.claude/skills/) - local
@@ -750,6 +758,22 @@ def update_templates(project_path: Path) -> bool:
     home_skills_path = Path.home() / ".claude" / "skills"
     migration_report = migrate_global_skills(home_skills_path)
     _print_migration_report(migration_report, home_skills_path)
+
+    # Memory v2 migration: introduce STATE.md if absent (conservative — never overwrite)
+    state_dst = dcbp_path / "STATE.md"
+    if not state_dst.exists():
+        state_src = templates_path / ".claude" / "dcbp" / "STATE.md"
+        if state_src.exists():
+            import shutil as _shutil
+            _shutil.copy2(state_src, state_dst)
+            print("[+] Cree STATE.md (Memory v2)")
+
+    # Memory v2 migration: introduce tasks/ if absent
+    tasks_dst = dcbp_path / "tasks"
+    if not tasks_dst.is_dir():
+        tasks_dst.mkdir()
+        (tasks_dst / ".gitkeep").touch()
+        print("[+] Cree tasks/")
 
     # S'assurer que le dossier archive existe
     archive_dst = dcbp_path / "archive"
