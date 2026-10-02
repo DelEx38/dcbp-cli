@@ -114,9 +114,15 @@ def classify_skill(skill_dir: Path) -> Ownership:
     content_str = content_normalized.decode('utf-8', errors='replace')
 
     # Criterion 1: Explicit ownership marker in FRONTMATTER (not body)
+    # Requires full identity coherence: tool==dcbp AND name==dir_name AND name in catalog
     fm = _parse_frontmatter(content_str)
     if fm is not None and fm.get('tool', '').lower() == 'dcbp':
-        return Ownership.OWNED
+        fm_name = fm.get('name', '').strip()
+        dir_name = skill_dir.name
+        if fm_name == dir_name and dir_name in DCBP_KNOWN_SKILL_NAMES:
+            return Ownership.OWNED
+        # Incoherent identity (name mismatch or unknown catalog entry) → UNKNOWN
+        return Ownership.UNKNOWN
 
     # Criterion 2: Hash match against known v0.5.0 templates + DCBP-specific text
     content_hash = hashlib.sha256(content_normalized).hexdigest()

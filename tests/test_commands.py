@@ -161,6 +161,36 @@ class TestClassifySkill:
 
         assert classify_skill(skill_dir) == Ownership.UNKNOWN
 
+    def test_name_mismatch_with_tool_dcbp_is_unknown(self, tmp_path):
+        """dir=dev, frontmatter: name=other-skill, tool=dcbp → UNKNOWN (identity incoherent)."""
+        skill_dir = tmp_path / "dev"
+        skill_dir.mkdir()
+        (skill_dir / "SKILL.md").write_text(
+            "---\nname: other-skill\ntool: dcbp\n---\n\n# Content\n",
+            encoding="utf-8"
+        )
+        assert classify_skill(skill_dir) == Ownership.UNKNOWN
+
+    def test_unknown_catalog_name_with_tool_dcbp_is_unknown(self, tmp_path):
+        """dir=unknown-name, name=unknown-name, tool=dcbp (not in catalog) → UNKNOWN."""
+        skill_dir = tmp_path / "unknown-name"
+        skill_dir.mkdir()
+        (skill_dir / "SKILL.md").write_text(
+            "---\nname: unknown-name\ntool: dcbp\n---\n\n# Content\n",
+            encoding="utf-8"
+        )
+        assert classify_skill(skill_dir) == Ownership.UNKNOWN
+
+    def test_coherent_identity_with_tool_dcbp_is_owned(self, tmp_path):
+        """dir=dev, name=dev, tool=dcbp (in catalog) → OWNED (full identity coherence)."""
+        skill_dir = tmp_path / "dev"
+        skill_dir.mkdir()
+        (skill_dir / "SKILL.md").write_text(
+            "---\nname: dev\ntool: dcbp\n---\n\n# Content\n",
+            encoding="utf-8"
+        )
+        assert classify_skill(skill_dir) == Ownership.OWNED
+
 
 # ===========================================================================
 # Tests: Global scope absent after fix
@@ -231,7 +261,7 @@ class TestProjectInstall:
         # Corrupt a skill
         dev_skill = project_skills / "dev" / "SKILL.md"
         original_content = dev_skill.read_text(encoding="utf-8")
-        dev_skill.write_text("---\ntool: dcbp\n---\n# Corrupted\n", encoding="utf-8")
+        dev_skill.write_text("---\nname: dev\ntool: dcbp\n---\n# Corrupted\n", encoding="utf-8")
 
         update_templates(fake_project)
 
