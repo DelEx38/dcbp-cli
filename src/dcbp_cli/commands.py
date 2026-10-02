@@ -627,9 +627,6 @@ def init_project(project_path: Path, force: bool = False, skip_questions: bool =
             if skills:
                 print(f"    [+] Skills: {', '.join(sorted(skills))}")
 
-        if (dcbp_path / "scripts").exists():
-            print("    [+] Scripts utilitaires")
-
         if (dcbp_path / "output").exists():
             print("    [+] Dossier output/")
 
@@ -753,16 +750,6 @@ def update_templates(project_path: Path) -> bool:
     home_skills_path = Path.home() / ".claude" / "skills"
     migration_report = migrate_global_skills(home_skills_path)
     _print_migration_report(migration_report, home_skills_path)
-
-    # Mettre a jour les scripts
-    scripts_src = templates_path / ".claude" / "dcbp" / "scripts"
-    scripts_dst = dcbp_path / "scripts"
-
-    if scripts_src.exists():
-        if scripts_dst.exists():
-            shutil.rmtree(scripts_dst)
-        shutil.copytree(scripts_src, scripts_dst)
-        print("[+] Mis a jour scripts/")
 
     # S'assurer que le dossier archive existe
     archive_dst = dcbp_path / "archive"
