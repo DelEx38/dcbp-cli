@@ -24,12 +24,17 @@ class Ownership(Enum):
     UNKNOWN = "unknown"
 
 
-# Skills shipped by DCBP v0.5.0 (12 skills)
+# Historical ownership catalog — all names ever shipped by DCBP (Safety Contract)
+# Includes v0.5.0 names, historical pre-v0.5.0 names, and all subsequent additions.
+# NEVER remove names from this set — removal breaks Safety invariants on upgraded projects.
 DCBP_KNOWN_SKILL_NAMES: frozenset = frozenset({
+    # v0.5.0 skills
     "archive", "bugfix", "commit", "deploy", "dev", "docs",
     "etat", "logs", "refactor", "review", "start", "test",
     # Historical names (pre-v0.5.0)
     "debug", "status", "create",
+    # v0.9.0 additions
+    "task",
 })
 
 # Text that only appears in DCBP-specific skills (not generic ones)
@@ -666,7 +671,17 @@ def init_project(project_path: Path, force: bool = False, skip_questions: bool =
             shutil.copy2(claude_template, claude_md)
             print("[+] Cree CLAUDE.md")
 
-    # Générer PROJECT.md personnalisé
+    # Install .claude/settings.json (push guardrail hook) — only if absent
+    settings_dst = claude_path / "settings.json"
+    settings_src = templates_path / ".claude" / "settings.json"
+    if not settings_dst.exists() and settings_src.exists():
+        import shutil as _shutil
+        _shutil.copy2(settings_src, settings_dst)
+        print("[+] Cree .claude/settings.json (guardrail hook)")
+    elif settings_dst.exists() and not force:
+        pass  # preserve existing settings — user may have customized
+
+    # Génerer PROJECT.md personnalisé
     if not skip_questions:
         project_md_content = generate_project_md(config)
         project_md_path = dcbp_path / "PROJECT.md"
@@ -692,10 +707,11 @@ def init_project(project_path: Path, force: bool = False, skip_questions: bool =
     print("  3. Utilisez /dev <feature> pour developper")
     print()
     print("Skills disponibles:")
+    print("  /task <demande>         - Formaliser une tache")
     print("  /start                  - Initialiser une session")
-    print("  /dev <feature>          - Developpement structure")
+    print("  /dev <DEV-XXX>          - Executer une tache READY")
     print("  /bugfix <bug>           - Investigation de bugs")
-    print("  /review <cible>         - Revue de code")
+    print("  /review <DEV-XXX>       - Valider (VERIFYING → DONE)")
     print("  /etat                   - Vue d'ensemble du projet")
     print("  /archive                - Archiver (sessions legacy)")
     print()
@@ -781,6 +797,23 @@ def update_templates(project_path: Path) -> bool:
         archive_dst.mkdir()
         (archive_dst / ".gitkeep").touch()
         print("[+] Cree archive/")
+
+    # Workflow Engine: introduce guardrail/ if absent
+    guardrail_dst = dcbp_path / "guardrail"
+    if not guardrail_dst.is_dir():
+        guardrail_src = templates_path / ".claude" / "dcbp" / "guardrail"
+        if guardrail_src.exists():
+            import shutil as _shutil
+            _shutil.copytree(guardrail_src, guardrail_dst)
+            print("[+] Cree guardrail/")
+
+    # Workflow Engine: introduce .claude/settings.json if absent
+    settings_dst = claude_path / "settings.json"
+    settings_src = templates_path / ".claude" / "settings.json"
+    if not settings_dst.exists() and settings_src.exists():
+        import shutil as _shutil
+        _shutil.copy2(settings_src, settings_dst)
+        print("[+] Cree .claude/settings.json (guardrail hook)")
 
     print()
     print("[OK] Templates mis a jour!")
