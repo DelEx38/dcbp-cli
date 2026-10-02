@@ -393,7 +393,7 @@ Le skill `/dev` suit une methodologie en **7 phases** inspiree d'APEX :
 
 - Genere un `task_id` (ex: DEV-007)
 - Cree un fichier de suivi dans `.claude/dcbp/output/`
-- Parse les flags (-a, -s, -r)
+- Parse les flags (-a, -r)
 
 **Output** : `task_id` et contexte initial
 

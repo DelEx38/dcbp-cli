@@ -7,7 +7,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
-from . import __version__
 from .contract import CORE_SKILL_NAMES, LEGACY_SCRIPT_NAMES
 from .commands import classify_skill, Ownership
 
