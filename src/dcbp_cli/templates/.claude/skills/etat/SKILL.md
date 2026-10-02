@@ -1,49 +1,58 @@
 ---
 name: etat
 tool: dcbp
-description: "Vue d'ensemble rapide du projet DCBP. Affiche l'état actuel, les tâches en cours et les prochaines étapes."
+description: "Vue d'ensemble rapide du projet DCBP. État, workflow, tâches actives."
 allowed-tools: Read, Glob
 ---
 
-# /etat - Vue d'Ensemble du Projet
+# /etat — Vue d'Ensemble du Projet
 
-Affiche un résumé complet de l'état du projet.
+Affiche l'état courant du projet et du workflow.
 
 ## Workflow
 
 ### Phase 1: Collect
-1. Lire `.claude/dcbp/STATE.md` - état courant, objectif, blockers
-2. Lire `.claude/dcbp/TASKS.md` - état du backlog
-3. Lire `.claude/dcbp/ISSUES.md` - bugs ouverts
-4. Lire `.claude/dcbp/PROJECT.md` - contexte général si nécessaire
+
+1. Lire `.claude/dcbp/STATE.md` — état global, tâche active, blockers
+2. Lire `.claude/dcbp/TASKS.md` — index des tâches et statuts
+3. Lire `.claude/dcbp/ISSUES.md` — bugs ouverts
+4. Si une tâche est active : lire `.claude/dcbp/tasks/<ID>.md`
+5. Lire `.claude/dcbp/PROJECT.md` si contexte nécessaire
 
 ### Phase 2: Summarize
-1. Résumer l'état actuel du projet depuis STATE.md
-2. Lister les tâches en cours
-3. Lister les blocages éventuels
-4. Suggérer les prochaines actions
 
-## Template de sortie
+Présenter :
 
 ```markdown
 ## Status: [nom projet]
 
 ### État courant
 - Phase: ...
-- Statut: ...
-- Objectif: ...
+- Statut global: ...
 
-### En cours
-- [ ] Tâche 1
-- [ ] Tâche 2
+### Tâche active
+- ID: DEV-XXX / BUG-XXX / Aucune
+- Statut workflow: REQUEST | CLARIFYING | READY | IMPLEMENTING | VERIFYING | DONE | BLOCKED
+- Titre: ...
+
+### Tâches en VERIFYING (en attente de /review)
+- DEV-XXX — titre
+
+### Tâches READY (prêtes à exécuter)
+- DEV-XXX — titre
 
 ### Blocages
-- Aucun / Liste...
+- Aucun / Liste des blockers
 
 ### Bugs ouverts
 - X critique(s), Y majeur(s)
 
-### Prochaines étapes suggérées
+### Prochaine action suggérée
 1. ...
-2. ...
 ```
+
+### Note workflow
+
+Rappeler si nécessaire :
+- `DONE` ≠ `PUSH_ALLOWED`
+- Push nécessite une autorisation explicite séparée
