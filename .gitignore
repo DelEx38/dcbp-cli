@@ -45,3 +45,6 @@ htmlcov/
 .dcbp/
 .claude/dcbp/
 .claude/worktrees/
+
+# Audit reports (local only, not part of release)
+audit/
