@@ -39,8 +39,8 @@ Claude Code perd son contexte entre les sessions. A chaque nouvelle conversation
 DCBP cree une **memoire persistante** via des fichiers Markdown que Claude lit au debut de chaque session :
 
 1. **CLAUDE.md** - Point d'entree automatique, charge par Claude Code
-2. **Fichiers de memoire** - Contexte, progres, decisions, taches
-3. **Skills structures** - Workflows guides etape par etape
+2. **Fichiers de memoire** - Contexte, progres, decisions, taches (dans `.claude/dcbp/`)
+3. **Skills structures** - Workflows guides etape par etape (dans `.claude/skills/`)
 
 ---
 
@@ -52,10 +52,9 @@ DCBP cree une **memoire persistante** via des fichiers Markdown que Claude lit a
 # 1. Installer dcbp-cli
 pip install git+https://github.com/DelEx38/dcbp-cli.git
 
-# 2. Installer les skills globalement (une seule fois)
-dcbp install
-
-# 3. Redemarrer Claude Code pour activer les skills
+# 2. Initialiser DCBP dans votre projet
+cd mon-projet
+dcbp init
 ```
 
 ### En developpement local
@@ -64,24 +63,22 @@ dcbp install
 git clone https://github.com/DelEx38/dcbp-cli.git
 cd dcbp-cli
 pip install -e .
-dcbp install
 ```
 
 ### Verification
 
 ```bash
 dcbp --version
-# dcbp-cli 0.2.2
+# dcbp-cli 0.6.0
 ```
 
 ### Commandes CLI
 
 | Commande | Description |
 |----------|-------------|
-| `dcbp install` | Installe les skills dans ~/.claude/skills/ (une fois) |
-| `dcbp install --force` | Met a jour les skills existants |
-| `dcbp init` | Initialise DCBP dans un projet |
+| `dcbp init` | Initialise DCBP dans un projet (installe les skills localement) |
 | `dcbp init --quick` | Initialise sans questions interactives |
+| `dcbp init --force` | Reinitialise (ecrase les fichiers DCBP existants, preserve les tiers) |
 | `dcbp update` | Met a jour les templates d'un projet |
 
 ---
@@ -99,7 +96,7 @@ L'assistant vous posera quelques questions :
 
 ```
 ============================================================
-  DCBP v0.1.0 - Initialisation du projet
+  DCBP v0.6.0 - Initialisation du projet
 ============================================================
 
 Repondez aux questions suivantes pour configurer votre projet.
@@ -153,7 +150,7 @@ dcbp init --quick   # Utilise les templates par defaut
 
 ### 2. Configuration manuelle (optionnel)
 
-Si vous voulez ajuster la configuration, editez `.dcbp/PROJECT.md` :
+Si vous voulez ajuster la configuration, editez `.claude/dcbp/PROJECT.md` :
 
 ```markdown
 # Mon Projet
@@ -193,39 +190,35 @@ Dans Claude Code, utilisez les commandes :
 
 ## Structure des fichiers
 
-### Skills globaux (apres `dcbp install`)
-
-Les skills sont installes dans votre dossier utilisateur :
-
-```
-~/.claude/skills/
-├── start/SKILL.md       # Initialisation de session
-├── dev/SKILL.md         # Developpement structure
-├── bugfix/SKILL.md      # Investigation de bugs
-├── review/SKILL.md      # Revue de code
-├── etat/SKILL.md        # Vue d'ensemble du projet
-└── archive/SKILL.md     # Archivage de PROGRESS.md
-```
-
 ### Projet (apres `dcbp init`)
 
 ```
 mon-projet/
 ├── CLAUDE.md                    # Point d'entree Claude Code
-├── .claude/skills/              # Skills locaux (copie)
-└── .dcbp/
-    ├── PROJECT.md               # [EDITER] Configuration projet
-    ├── PROGRESS.md              # Journal des sessions
-    ├── TASKS.md                 # Backlog et taches
-    ├── ISSUES.md                # Bugs et dette technique
-    ├── DECISIONS.md             # Decisions architecturales
-    ├── archive/                 # Sessions archivees (via /archive)
-    ├── output/                  # Fichiers generes (optionnel)
-    └── scripts/
-        ├── init_task.py         # Initialisation de taches
-        ├── update_progress.py   # Mise a jour du progres
-        └── sync_memory.py       # Synchronisation memoire
+└── .claude/
+    ├── skills/                  # Skills locaux (format natif Claude Code)
+    │   ├── start/SKILL.md       # Initialisation de session
+    │   ├── dev/SKILL.md         # Developpement structure
+    │   ├── bugfix/SKILL.md      # Investigation de bugs
+    │   ├── review/SKILL.md      # Revue de code
+    │   ├── etat/SKILL.md        # Vue d'ensemble du projet
+    │   └── archive/SKILL.md     # Archivage de PROGRESS.md
+    └── dcbp/
+        ├── PROJECT.md           # [EDITER] Configuration projet
+        ├── PROGRESS.md          # Journal des sessions
+        ├── TASKS.md             # Backlog et taches
+        ├── ISSUES.md            # Bugs et dette technique
+        ├── DECISIONS.md         # Decisions architecturales
+        ├── archive/             # Sessions archivees (via /archive)
+        ├── output/              # Fichiers generes (optionnel)
+        └── scripts/
+            ├── init_task.py     # Initialisation de taches
+            ├── update_progress.py  # Mise a jour du progres
+            └── sync_memory.py   # Synchronisation memoire
 ```
+
+> **Note securite (v0.6.0)** : Les skills sont installes **uniquement** dans `.claude/skills/` du projet.
+> DCBP ne modifie jamais `~/.claude/skills/` et ne detruit jamais les skills tiers.
 
 ---
 
@@ -355,8 +348,8 @@ FastAPI
 
 ## Skills disponibles
 
-> **Note** : Les skills sont installes globalement dans `~/.claude/skills/` via `dcbp install`.
-> Ils sont disponibles dans tous vos projets apres installation.
+> **Note** : Les skills sont installes dans `.claude/skills/` du projet lors de `dcbp init`.
+> Ils sont disponibles uniquement dans le projet ou ils ont ete installes.
 
 | Commande | Description | Quand l'utiliser |
 |----------|-------------|------------------|
@@ -401,7 +394,7 @@ Le skill `/dev` suit une methodologie en **7 phases** inspiree d'APEX :
 **But** : Initialiser la tache et creer un identifiant unique.
 
 - Genere un `task_id` (ex: DEV-007)
-- Cree un fichier de suivi dans `.dcbp/output/`
+- Cree un fichier de suivi dans `.claude/dcbp/output/`
 - Parse les flags (-a, -s, -r)
 
 **Output** : `task_id` et contexte initial
@@ -549,7 +542,7 @@ PROGRESS.md grandit avec le temps. Apres 20 sessions, il peut atteindre 15-20 KB
 ### Structure des archives
 
 ```
-.dcbp/
+.claude/dcbp/
 ├── PROGRESS.md              # Sessions recentes (5 dernieres)
 └── archive/
     ├── PROGRESS-2026-01.md  # Archive janvier
@@ -572,7 +565,7 @@ PROGRESS.md grandit avec le temps. Apres 20 sessions, il peut atteindre 15-20 KB
 | Flag | Description | Exemple |
 |------|-------------|---------|
 | `-a` | Mode autonome (sans confirmations) | `/dev -a feature` |
-| `-s` | Sauvegarde les outputs dans `.dcbp/output/` | `/dev -s feature` |
+| `-s` | Sauvegarde les outputs dans `.claude/dcbp/output/` | `/dev -s feature` |
 | `-r <id>` | Reprendre une tache existante | `/dev -r DEV-005` |
 
 ### Combinaisons
@@ -652,17 +645,20 @@ dcbp update
 ```
 
 La commande `update` :
-- Met a jour les skills (`.dcbp/skills/`)
-- Met a jour les scripts (`.dcbp/scripts/`)
+- Met a jour les skills (`.claude/skills/`) pour les skills DCBP identifies
+- Met a jour les scripts (`.claude/dcbp/scripts/`)
 - **Preserve** vos fichiers de memoire (PROJECT.md, PROGRESS.md, etc.)
+- **Preserve** les skills tiers (non-DCBP) dans `.claude/skills/`
 
 ### Reinitialiser completement
 
-Pour repartir de zero (perte de la memoire) :
+Pour remettre a jour les fichiers DCBP (la memoire du projet est preservee) :
 
 ```bash
 dcbp init --force
 ```
+
+> **Note** : `--force` n'ecrase jamais les skills tiers. Seuls les skills identifies comme appartenant a DCBP sont mis a jour.
 
 ---
 
@@ -727,14 +723,14 @@ Utilisez `/archive` regulierement pour reduire la taille de PROGRESS.md :
 
 Verifiez que :
 1. `CLAUDE.md` est a la racine du projet
-2. Le dossier `.dcbp/` existe
+2. Le dossier `.claude/dcbp/` existe
 3. Vous etes dans le bon repertoire
 
 ### Les skills ne fonctionnent pas
 
-1. Executez `dcbp install --force` pour reinstaller les skills globalement
+1. Executez `dcbp init --force` pour reinstaller les skills localement
 2. Redemarrez Claude Code pour recharger les skills
-3. Verifiez que `~/.claude/skills/` contient les dossiers des skills
+3. Verifiez que `.claude/skills/` contient les dossiers des skills
 
 ### Claude oublie le contexte
 

@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 from . import __version__
-from .commands import init_project, update_templates, install_skills
+from .commands import init_project, update_templates
 
 
 def main():
@@ -27,7 +27,7 @@ def main():
 Exemples:
   dcbp init          Initialise DCBP avec questions interactives
   dcbp init --quick  Initialise sans questions (templates par défaut)
-  dcbp init --force  Réinitialise (écrase les fichiers existants)
+  dcbp init --force  Réinitialise (écrase les fichiers DCBP existants)
   dcbp update        Met à jour les templates vers la dernière version
         """
     )
@@ -74,17 +74,6 @@ Exemples:
         help="Chemin du projet (défaut: répertoire courant)"
     )
 
-    # Commande install (installation globale des skills)
-    install_parser = subparsers.add_parser(
-        "install",
-        help="Installe les skills DCBP globalement (~/.claude/skills/)"
-    )
-    install_parser.add_argument(
-        "--force", "-f",
-        action="store_true",
-        help="Écrase les skills existants"
-    )
-
     args = parser.parse_args()
 
     if args.command is None:
@@ -102,11 +91,6 @@ Exemples:
     elif args.command == "update":
         success = update_templates(Path(args.path))
         sys.exit(0 if success else 1)
-
-    elif args.command == "install":
-        success = install_skills(force=args.force)
-        sys.exit(0 if success else 1)
-
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,6 @@
 ---
 name: docs
+tool: dcbp
 description: "Génération de documentation Python (docstrings, README, API docs)."
 argument-hint: "<fichier, module ou 'readme'>"
 allowed-tools: Read, Edit, Write, Glob, Grep

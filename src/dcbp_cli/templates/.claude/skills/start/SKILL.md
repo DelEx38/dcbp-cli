@@ -1,5 +1,6 @@
 ---
 name: start
+tool: dcbp
 description: "Initialise une nouvelle session de travail. Charge le contexte complet du projet et suggère quoi faire."
 allowed-tools: Read, Glob, Grep
 ---
@@ -80,6 +81,6 @@ Générer un rapport au format suivant :
 3. **[action optionnelle]** - [raison]
 
 ───────────────────────────────────────────────────────────────
-Skills : /dev <feature> | /debug <bug> | /review <file> | /status
+Skills : /dev <feature> | /bugfix <bug> | /review <file> | /etat
 ╚═════════════════════════════════════════════════════════════╝
 ```

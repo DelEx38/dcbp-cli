@@ -1,5 +1,6 @@
 ---
 name: logs
+tool: dcbp
 description: "Analyse de logs, détection de patterns et diagnostic d'erreurs."
 argument-hint: "<fichier log ou 'tail'>"
 allowed-tools: Read, Glob, Grep, Bash

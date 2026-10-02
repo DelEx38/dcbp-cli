@@ -1,5 +1,6 @@
 ---
 name: test
+tool: dcbp
 description: "Génération et exécution de tests Python (pytest/unittest)."
 argument-hint: "<fichier ou fonction à tester>"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash

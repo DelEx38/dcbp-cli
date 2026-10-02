@@ -1,5 +1,6 @@
 ---
 name: deploy
+tool: dcbp
 description: "Workflow de déploiement avec vérifications et rollback."
 argument-hint: "[environnement: dev|staging|prod]"
 allowed-tools: Read, Glob, Grep, Bash

@@ -1,5 +1,6 @@
 ---
 name: archive
+tool: dcbp
 description: "Archive les anciennes sessions de PROGRESS.md pour économiser des tokens."
 argument-hint: "[nombre_sessions_a_garder]"
 allowed-tools: Read, Edit, Write

@@ -1,5 +1,6 @@
 ---
 name: bugfix
+tool: dcbp
 description: "Investigation et correction de bugs."
 argument-hint: "<description du bug>"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash

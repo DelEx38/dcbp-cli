@@ -1,5 +1,6 @@
 ---
 name: refactor
+tool: dcbp
 description: "Refactoring structuré avec analyse, proposition et vérification."
 argument-hint: "<fichier ou pattern à refactorer>"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash

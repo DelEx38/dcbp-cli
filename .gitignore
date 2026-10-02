@@ -40,3 +40,8 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+# DCBP local memory (project-specific, not committed)
+.dcbp/
+.claude/dcbp/
+.claude/worktrees/
