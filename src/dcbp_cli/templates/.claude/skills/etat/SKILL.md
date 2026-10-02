@@ -1,5 +1,6 @@
 ---
 name: etat
+tool: dcbp
 description: "Vue d'ensemble rapide du projet DCBP. Affiche l'état actuel, les tâches en cours et les prochaines étapes."
 allowed-tools: Read, Glob
 ---

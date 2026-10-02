@@ -1,5 +1,6 @@
 ---
 name: review
+tool: dcbp
 description: "Revue de code structurée."
 argument-hint: "<fichier ou dossier>"
 allowed-tools: Read, Glob, Grep

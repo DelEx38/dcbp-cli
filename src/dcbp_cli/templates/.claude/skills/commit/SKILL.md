@@ -1,5 +1,6 @@
 ---
 name: commit
+tool: dcbp
 description: "Commits intelligents avec messages conventionnels et vérifications."
 argument-hint: "[message optionnel]"
 allowed-tools: Read, Glob, Grep, Bash

@@ -11,6 +11,237 @@ from datetime import date
 from . import __version__
 
 
+# ============================================================================
+# Ownership model
+# ============================================================================
+
+import hashlib
+from enum import Enum
+
+
+class Ownership(Enum):
+    OWNED = "owned"
+    UNKNOWN = "unknown"
+
+
+# Skills shipped by DCBP v0.5.0 (12 skills)
+DCBP_KNOWN_SKILL_NAMES: frozenset = frozenset({
+    "archive", "bugfix", "commit", "deploy", "dev", "docs",
+    "etat", "logs", "refactor", "review", "start", "test",
+    # Historical names (pre-v0.5.0)
+    "debug", "status", "create",
+})
+
+# Text that only appears in DCBP-specific skills (not generic ones)
+DCBP_SPECIFIC_MARKERS: tuple = (
+    ".claude/dcbp/",
+    "SESSION DCBP INITIALISÉE",
+    "ARCHIVAGE TERMINÉ",
+    "Vue d'ensemble rapide du projet DCBP",
+)
+
+# SHA-256 hashes of known DCBP v0.5.0 SKILL.md files (content with LF line endings)
+# Computed from src/dcbp_cli/templates/.claude/skills/*/SKILL.md BEFORE adding tool: dcbp
+DCBP_V050_SKILL_HASHES: dict = {
+    "archive": "11ef301cbdeeb47baccd5aa16a3eb25802f32c75e4318df70b2355ce75b3b59b",
+    "bugfix": "d5d495844933f33ae30ff72c482fcd2631ceb09a005dddaf59e1eac5909cef0e",
+    "commit": "fa6ac90216608882d0232c219f3f96c1faf923d6a010a5aacd6f758e366df6a2",
+    "deploy": "e4b0d03a2b6216119bd86119ce01169660f9fedd84cc4d7eb2ee2eb98a1c3107",
+    "dev": "cfa8e99f42ed4587ee1920521efd82bc58b7217328f932ef7325efea903b8009",
+    "docs": "572080817d60e755eaf7e78371f2b5aeb195e745c8ce6284315c2e5e1469de82",
+    "etat": "d23482a761153f9bf877af41f7064d30356459d3baa4267404e1f138133ee412",
+    "logs": "17d3f49dffcfe5f6f7e53f7e39b434eea11ac10c4606fcbbf38e4eecd6e183db",
+    "refactor": "46f3e68ddcb8cc2ddde68462d38ff6bde8ba09bec4beede0bfcea44d8c05262d",
+    "review": "f0d60bcbe75861d11df26c5addf32c1a7b5454e482469723446cf6acf697fc86",
+    "start": "b09a623384c34a9c603eb367d6bf057183e8b1088e5f9f7f58a53c7ea3b9c4c4",
+    "test": "8ba39f7f9988bbe4a2409a9ca06fcaf76cd72a62cad3d6751709421d70eba149",
+}
+
+
+def _parse_frontmatter(content: str) -> dict | None:
+    """
+    Parse YAML frontmatter from a SKILL.md file.
+    Returns the frontmatter dict, or None if no valid frontmatter found.
+    Frontmatter is delimited by --- on the first and second line.
+    Only parses the frontmatter block, never the body.
+    """
+    lines = content.split('\n')
+    if not lines or lines[0].strip() != '---':
+        return None
+
+    # Find closing ---
+    end_idx = None
+    for i in range(1, len(lines)):
+        if lines[i].strip() == '---':
+            end_idx = i
+            break
+
+    if end_idx is None:
+        return None
+
+    # Parse frontmatter lines as simple key: value
+    # Avoid adding yaml dependency - parse manually for our limited use case
+    frontmatter = {}
+    for line in lines[1:end_idx]:
+        if ':' in line:
+            key, _, value = line.partition(':')
+            key = key.strip()
+            value = value.strip().strip('"\'')
+            if key:
+                frontmatter[key] = value
+
+    return frontmatter
+
+
+def classify_skill(skill_dir: Path) -> Ownership:
+    """
+    Classify a skill directory as OWNED or UNKNOWN.
+    Conservative: returns UNKNOWN for any ambiguous case.
+    Never bases classification solely on directory name.
+    """
+    skill_md = skill_dir / "SKILL.md"
+
+    if not skill_md.exists():
+        return Ownership.UNKNOWN
+
+    try:
+        content_raw = skill_md.read_bytes()
+    except (OSError, PermissionError, IsADirectoryError):
+        return Ownership.UNKNOWN
+
+    # Normalize line endings for comparison
+    content_normalized = content_raw.replace(b'\r\n', b'\n').replace(b'\r', b'\n')
+    content_str = content_normalized.decode('utf-8', errors='replace')
+
+    # Criterion 1: Explicit ownership marker in FRONTMATTER (not body)
+    # Requires full identity coherence: tool==dcbp AND name==dir_name AND name in catalog
+    fm = _parse_frontmatter(content_str)
+    if fm is not None and fm.get('tool', '').lower() == 'dcbp':
+        fm_name = fm.get('name', '').strip()
+        dir_name = skill_dir.name
+        if fm_name == dir_name and dir_name in DCBP_KNOWN_SKILL_NAMES:
+            return Ownership.OWNED
+        # Incoherent identity (name mismatch or unknown catalog entry) → UNKNOWN
+        return Ownership.UNKNOWN
+
+    # Criterion 2: Hash match against known v0.5.0 templates + DCBP-specific text
+    content_hash = hashlib.sha256(content_normalized).hexdigest()
+    skill_name = skill_dir.name
+
+    expected_hash = DCBP_V050_SKILL_HASHES.get(skill_name)
+    hash_matches = expected_hash is not None and expected_hash == content_hash
+    has_dcbp_marker = any(marker in content_str for marker in DCBP_SPECIFIC_MARKERS)
+
+    if hash_matches and has_dcbp_marker:
+        return Ownership.OWNED
+
+    # Everything else is UNKNOWN
+    return Ownership.UNKNOWN
+
+
+def _install_skills_to_project(
+    skills_src: Path,
+    skills_dst: Path,
+    force: bool = False,
+) -> dict:
+    """
+    Install DCBP skills into {project}/.claude/skills/ skill by skill.
+    Never removes the destination directory.
+    Never overwrites UNKNOWN skills.
+    Returns report dict with installed/updated/skipped lists.
+    """
+    if not skills_src.exists():
+        return {"installed": [], "updated": [], "skipped_unknown": [], "skipped_existing": []}
+
+    skills_dst.mkdir(parents=True, exist_ok=True)
+
+    installed = []
+    updated = []
+    skipped_unknown = []
+    skipped_existing = []
+
+    for skill_src_dir in sorted(skills_src.iterdir()):
+        if not skill_src_dir.is_dir():
+            continue
+
+        skill_name = skill_src_dir.name
+        skill_dest_dir = skills_dst / skill_name
+
+        if not skill_dest_dir.exists():
+            shutil.copytree(skill_src_dir, skill_dest_dir)
+            installed.append(skill_name)
+        else:
+            ownership = classify_skill(skill_dest_dir)
+            if ownership == Ownership.OWNED:
+                if force:
+                    shutil.rmtree(skill_dest_dir)
+                    shutil.copytree(skill_src_dir, skill_dest_dir)
+                    updated.append(skill_name)
+                else:
+                    skipped_existing.append(skill_name)
+            else:
+                skipped_unknown.append(skill_name)
+                print(f"    [!] Conservé (propriété inconnue) : {skill_name}/")
+
+    return {
+        "installed": installed,
+        "updated": updated,
+        "skipped_unknown": skipped_unknown,
+        "skipped_existing": skipped_existing,
+    }
+
+
+def migrate_global_skills(home_skills_path: Path) -> dict:
+    """
+    Remove only DCBP-owned skills from ~/.claude/skills/.
+    Conservative: UNKNOWN elements are NEVER touched.
+    Idempotent: safe to call multiple times.
+    """
+    if not home_skills_path.exists():
+        return {"removed": [], "unknown": [], "not_dir": []}
+
+    removed = []
+    unknown = []
+    not_dir = []
+
+    for entry in sorted(home_skills_path.iterdir()):
+        if not entry.is_dir():
+            not_dir.append(entry.name)
+            continue
+
+        ownership = classify_skill(entry)
+
+        if ownership == Ownership.OWNED:
+            shutil.rmtree(entry)
+            removed.append(entry.name)
+        else:
+            unknown.append(entry.name)
+
+    return {"removed": removed, "unknown": unknown, "not_dir": not_dir}
+
+
+def _print_migration_report(report: dict, home_skills_path: Path) -> None:
+    """Print a user-friendly migration report."""
+    if not report["removed"] and not report["unknown"]:
+        return  # Nothing to report if no global skills at all
+
+    print()
+    print("[*] Vérification des anciens skills globaux dans ~/.claude/skills/")
+
+    if report["removed"]:
+        print(f"[+] Retirés (identifiés DCBP) : {', '.join(report['removed'])}")
+
+    if report["unknown"]:
+        print(f"[?] Conservés (propriété inconnue) : {', '.join(report['unknown'])}")
+        print("    Ces éléments n'ont pas été modifiés.")
+        print("    Si certains proviennent d'une ancienne installation DCBP,")
+        print("    vous pouvez les supprimer manuellement.")
+
+    if not report["removed"]:
+        print("    Aucun skill DCBP identifiable avec certitude.")
+        print("    Rien n'a été modifié.")
+
+
 # =============================================================================
 # Configuration des choix
 # =============================================================================
@@ -298,7 +529,7 @@ def init_project(project_path: Path, force: bool = False, skip_questions: bool =
 
     Args:
         project_path: Chemin du projet cible
-        force: Si True, ecrase les fichiers existants
+        force: Si True, ecrase les fichiers existants DCBP (jamais les skills inconnus)
         skip_questions: Si True, ne pose pas de questions (mode rapide)
 
     Returns:
@@ -405,41 +636,23 @@ def init_project(project_path: Path, force: bool = False, skip_questions: bool =
         if (dcbp_path / "archive").exists():
             print("    [+] Dossier archive/")
 
-    # Copier les skills dans .claude/skills/ (format natif Claude Code)
+    # Installer les skills dans .claude/skills/ (format natif Claude Code)
+    # Uses skill-by-skill installation: NEVER overwrites UNKNOWN skills
     skills_template = templates_path / ".claude" / "skills"
     skills_path = claude_path / "skills"
     if skills_template.exists():
-        if skills_path.exists() and force:
-            shutil.rmtree(skills_path)
-        if not skills_path.exists():
-            shutil.copytree(skills_template, skills_path)
-            skills_dirs = [d.name for d in skills_path.iterdir() if d.is_dir()]
-            print(f"[+] Cree .claude/skills/ ({', '.join(sorted(skills_dirs))})")
+        report = _install_skills_to_project(skills_template, skills_path, force=force)
+        if report["installed"]:
+            print(f"[+] Skills installes : {', '.join(sorted(report['installed']))}")
+        if report["updated"]:
+            print(f"[*] Skills mis a jour : {', '.join(sorted(report['updated']))}")
+        if report["skipped_unknown"]:
+            print(f"[!] Skills conserves (inconnus) : {', '.join(sorted(report['skipped_unknown']))}")
 
-    # 2. Dans le dossier global ~/.claude/skills/ (pour que les skills soient toujours disponibles)
-    home_claude_path = Path.home() / ".claude"
-    home_skills_path = home_claude_path / "skills"
-    skills_template = templates_path / ".claude" / "skills"
-    if skills_template.exists():
-        home_claude_path.mkdir(exist_ok=True)
-        if home_skills_path.exists() and force:
-            shutil.rmtree(home_skills_path)
-        if not home_skills_path.exists():
-            shutil.copytree(skills_template, home_skills_path)
-            skills_dirs = [d.name for d in home_skills_path.iterdir() if d.is_dir()]
-            print(f"[+] Cree ~/.claude/skills/ ({', '.join(sorted(skills_dirs))})")
-        else:
-            # Copier les skills manquants sans écraser
-            for skill_dir in skills_template.iterdir():
-                if skill_dir.is_dir():
-                    dest_skill = home_skills_path / skill_dir.name
-                    if not dest_skill.exists():
-                        shutil.copytree(skill_dir, dest_skill)
-                        print(f"    [+] Ajoute skill: {skill_dir.name}")
-                    elif force:
-                        shutil.rmtree(dest_skill)
-                        shutil.copytree(skill_dir, dest_skill)
-                        print(f"    [*] Mis a jour: {skill_dir.name}")
+    # Migrate: clean up DCBP-owned skills from ~/.claude/skills/ if present
+    home_skills_path = Path.home() / ".claude" / "skills"
+    migration_report = migrate_global_skills(home_skills_path)
+    _print_migration_report(migration_report, home_skills_path)
 
     # Copier CLAUDE.md
     claude_template = templates_path / "CLAUDE.md"
@@ -523,27 +736,23 @@ def update_templates(project_path: Path) -> bool:
     ]
 
     # Mettre a jour les skills (.claude/skills/) - local
+    # Uses skill-by-skill update with force=True for OWNED skills
+    # NEVER overwrites UNKNOWN skills
     claude_skills_src = templates_path / ".claude" / "skills"
     claude_skills_dst = claude_path / "skills"
 
     if claude_skills_src.exists():
-        if claude_skills_dst.exists():
-            shutil.rmtree(claude_skills_dst)
-        shutil.copytree(claude_skills_src, claude_skills_dst)
-        skills_dirs = [d.name for d in claude_skills_dst.iterdir() if d.is_dir()]
-        print(f"[+] Mis a jour .claude/skills/ ({', '.join(sorted(skills_dirs))})")
+        report = _install_skills_to_project(claude_skills_src, claude_skills_dst, force=True)
+        all_touched = report["installed"] + report["updated"]
+        if all_touched:
+            print(f"[+] Mis a jour .claude/skills/ ({', '.join(sorted(all_touched))})")
+        if report["skipped_unknown"]:
+            print(f"[!] Conserves (inconnus) : {', '.join(sorted(report['skipped_unknown']))}")
 
-    # Mettre a jour les skills (~/.claude/skills/) - global
-    home_claude_path = Path.home() / ".claude"
-    home_skills_path = home_claude_path / "skills"
-
-    if claude_skills_src.exists():
-        home_claude_path.mkdir(exist_ok=True)
-        if home_skills_path.exists():
-            shutil.rmtree(home_skills_path)
-        shutil.copytree(claude_skills_src, home_skills_path)
-        skills_dirs = [d.name for d in home_skills_path.iterdir() if d.is_dir()]
-        print(f"[+] Mis a jour ~/.claude/skills/ ({', '.join(sorted(skills_dirs))})")
+    # Migrate: clean up DCBP-owned skills from ~/.claude/skills/ if present
+    home_skills_path = Path.home() / ".claude" / "skills"
+    migration_report = migrate_global_skills(home_skills_path)
+    _print_migration_report(migration_report, home_skills_path)
 
     # Mettre a jour les scripts
     scripts_src = templates_path / ".claude" / "dcbp" / "scripts"
@@ -569,89 +778,6 @@ def update_templates(project_path: Path) -> bool:
     for f in preserve:
         if (dcbp_path / f).exists():
             print(f"  [+] {f}")
-    print()
-
-    return True
-
-
-def install_skills(force: bool = False) -> bool:
-    """
-    Installe les skills DCBP globalement dans ~/.claude/skills/.
-
-    Cette commande doit être exécutée une seule fois après l'installation
-    de dcbp-cli. Les skills seront ensuite disponibles dans tous les projets.
-
-    Args:
-        force: Si True, écrase les skills existants
-
-    Returns:
-        True si succès, False sinon
-    """
-    templates_path = get_templates_path()
-    skills_template = templates_path / ".claude" / "skills"
-
-    if not skills_template.exists():
-        print("[X] Skills templates non trouves")
-        return False
-
-    home_claude_path = Path.home() / ".claude"
-    home_skills_path = home_claude_path / "skills"
-
-    print()
-    print("=" * 60)
-    print(f"  DCBP v{__version__} - Installation des Skills")
-    print("=" * 60)
-    print()
-    print(f"[*] Installation dans: {home_skills_path}")
-    print()
-
-    # Créer le dossier ~/.claude si nécessaire
-    home_claude_path.mkdir(exist_ok=True)
-
-    # Installer les skills
-    installed = []
-    updated = []
-    skipped = []
-
-    for skill_dir in skills_template.iterdir():
-        if skill_dir.is_dir():
-            dest_skill = home_skills_path / skill_dir.name
-            if not dest_skill.exists():
-                shutil.copytree(skill_dir, dest_skill)
-                installed.append(skill_dir.name)
-                print(f"[+] Installe: /{skill_dir.name}")
-            elif force:
-                shutil.rmtree(dest_skill)
-                shutil.copytree(skill_dir, dest_skill)
-                updated.append(skill_dir.name)
-                print(f"[*] Met a jour: /{skill_dir.name}")
-            else:
-                skipped.append(skill_dir.name)
-                print(f"[=] Existe deja: /{skill_dir.name}")
-
-    print()
-    print("=" * 60)
-    print("  [OK] Installation terminee!")
-    print("=" * 60)
-    print()
-
-    if installed:
-        print(f"  Installes : {len(installed)} ({', '.join(installed)})")
-    if updated:
-        print(f"  Mis a jour: {len(updated)} ({', '.join(updated)})")
-    if skipped:
-        print(f"  Ignores   : {len(skipped)} (utilisez --force pour ecraser)")
-
-    print()
-    print("Skills disponibles:")
-    print("  /start                  - Initialiser une session")
-    print("  /dev <feature>          - Developpement structure")
-    print("  /bugfix <bug>           - Investigation de bugs")
-    print("  /review <cible>         - Revue de code")
-    print("  /etat                   - Vue d'ensemble du projet")
-    print("  /archive                - Archiver PROGRESS.md")
-    print()
-    print("[!] Redemarrez Claude Code pour activer les nouveaux skills")
     print()
 
     return True

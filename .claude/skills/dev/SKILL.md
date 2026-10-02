@@ -1,5 +1,6 @@
 ---
 name: dev
+tool: dcbp
 description: "Développement structuré d'une fonctionnalité en plusieurs phases."
 argument-hint: "<description de la feature>"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash

@@ -1,5 +1,6 @@
 ---
 name: etat
+tool: dcbp
 description: "Vue d'ensemble rapide du projet DCBP. Affiche l'état actuel, les tâches en cours et les prochaines étapes."
 allowed-tools: Read, Glob
 ---
@@ -11,10 +12,10 @@ Affiche un résumé complet de l'état du projet.
 ## Workflow
 
 ### Phase 1: Collect
-1. Lire `.dcbp/PROJECT.md` - contexte général
-2. Lire `.dcbp/PROGRESS.md` - dernières sessions
-3. Lire `.dcbp/TASKS.md` - état du backlog
-4. Lire `.dcbp/ISSUES.md` - bugs ouverts
+1. Lire `.claude/dcbp/PROJECT.md` - contexte général
+2. Lire `.claude/dcbp/PROGRESS.md` - dernières sessions
+3. Lire `.claude/dcbp/TASKS.md` - état du backlog
+4. Lire `.claude/dcbp/ISSUES.md` - bugs ouverts
 
 ### Phase 2: Summarize
 1. Résumer l'état actuel du projet
