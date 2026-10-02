@@ -46,5 +46,5 @@ htmlcov/
 .claude/dcbp/
 .claude/worktrees/
 
-# Audit reports (local only, not part of release)
-audit/
+# Wheel build artefacts (not part of release)
+dist_audit/*.whl

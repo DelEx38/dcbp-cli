@@ -251,7 +251,7 @@ class TestProjectInstall:
         project_skills = fake_project / ".claude" / "skills"
         assert project_skills.exists()
         skill_dirs = [d.name for d in project_skills.iterdir() if d.is_dir()]
-        assert len(skill_dirs) >= 12, f"Expected 12+ skills, found: {skill_dirs}"
+        assert len(skill_dirs) >= 6, f"Expected 6+ skills, found: {skill_dirs}"
 
     def test_update_refreshes_project_skills(self, fake_home, fake_project):
         """update must refresh skills in project/.claude/skills/."""
@@ -278,7 +278,7 @@ class TestProjectInstall:
 class TestThirdPartySkillsPreserved:
     """Third-party skills must survive init, init --force, and update."""
 
-    SKILL_NAMES = ["dev", "review", "test", "commit"]
+    SKILL_NAMES = ["dev", "review", "archive", "bugfix"]
 
     def _plant_third_party_skills(self, project_path, skill_names, content):
         """Install fake third-party skills in project/.claude/skills/."""

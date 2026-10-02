@@ -20,6 +20,7 @@ DCBP resout un probleme fondamental de Claude Code : **la perte de contexte entr
 - [Flags et options](#flags-et-options)
 - [Bonnes pratiques](#bonnes-pratiques)
 - [Mise a jour](#mise-a-jour)
+- [Diagnostic avec dcbp doctor](#diagnostic-avec-dcbp-doctor)
 - [Token Usage](#token-usage)
 
 ---
@@ -80,6 +81,7 @@ dcbp --version
 | `dcbp init --quick` | Initialise sans questions interactives |
 | `dcbp init --force` | Reinitialise (ecrase les fichiers DCBP existants, preserve les tiers) |
 | `dcbp update` | Met a jour les templates d'un projet |
+| `dcbp doctor` | Verifie l'etat du projet DCBP (read-only) |
 
 ---
 
@@ -210,11 +212,7 @@ mon-projet/
         ├── ISSUES.md            # Bugs et dette technique
         ├── DECISIONS.md         # Decisions architecturales
         ├── archive/             # Sessions archivees (via /archive)
-        ├── output/              # Fichiers generes (optionnel)
-        └── scripts/
-            ├── init_task.py     # Initialisation de taches
-            ├── update_progress.py  # Mise a jour du progres
-            └── sync_memory.py   # Synchronisation memoire
+        └── output/              # Fichiers generes (optionnel)
 ```
 
 > **Note securite (v0.6.0)** : Les skills sont installes **uniquement** dans `.claude/skills/` du projet.
@@ -395,7 +393,7 @@ Le skill `/dev` suit une methodologie en **7 phases** inspiree d'APEX :
 
 - Genere un `task_id` (ex: DEV-007)
 - Cree un fichier de suivi dans `.claude/dcbp/output/`
-- Parse les flags (-a, -s, -r)
+- Parse les flags (-a, -r)
 
 **Output** : `task_id` et contexte initial
 
@@ -565,14 +563,13 @@ PROGRESS.md grandit avec le temps. Apres 20 sessions, il peut atteindre 15-20 KB
 | Flag | Description | Exemple |
 |------|-------------|---------|
 | `-a` | Mode autonome (sans confirmations) | `/dev -a feature` |
-| `-s` | Sauvegarde les outputs dans `.claude/dcbp/output/` | `/dev -s feature` |
 | `-r <id>` | Reprendre une tache existante | `/dev -r DEV-005` |
 
 ### Combinaisons
 
 ```bash
-# Developpement autonome avec sauvegarde
-/dev -a -s implementer le cache Redis
+# Developpement autonome
+/dev -a implementer le cache Redis
 
 # Reprendre une tache en mode autonome
 /dev -a -r DEV-003
@@ -622,7 +619,7 @@ Utilisez DECISIONS.md pour :
 
 - `-a` pour les taches simples et bien definies
 - Sans flag pour les taches complexes (validation a chaque etape)
-- `-r` pour reprendre apres une interruption
+- `-r <id>` pour reprendre apres une interruption
 
 ### 5. Nettoyer regulierement
 
@@ -646,7 +643,6 @@ dcbp update
 
 La commande `update` :
 - Met a jour les skills (`.claude/skills/`) pour les skills DCBP identifies
-- Met a jour les scripts (`.claude/dcbp/scripts/`)
 - **Preserve** vos fichiers de memoire (PROJECT.md, PROGRESS.md, etc.)
 - **Preserve** les skills tiers (non-DCBP) dans `.claude/skills/`
 
@@ -714,6 +710,40 @@ Utilisez `/archive` regulierement pour reduire la taille de PROGRESS.md :
 |-------------|--------|----------------|
 | 20 sessions (~15 KB) | ~4300 | ~2000 (5 sessions) |
 | **Economie** | | **~2300 tokens** |
+
+---
+
+## Diagnostic avec dcbp doctor
+
+`dcbp doctor` effectue un bilan de sante complet du projet DCBP (lecture seule, ne modifie rien).
+
+```bash
+dcbp doctor           # Verifie le projet dans le repertoire courant
+dcbp doctor -p /path  # Verifie un projet specifique
+```
+
+### Checks effectues
+
+| ID | Verif | Niveau si absent |
+|----|-------|-----------------|
+| D01 | `.claude/dcbp/` present | ERROR |
+| D02 | `PROJECT.md` present et lisible | ERROR |
+| D03 | `PROGRESS.md` present et lisible | ERROR |
+| D04 | `CLAUDE.md` a la racine | WARNING |
+| D05–D07 | `TASKS.md`, `ISSUES.md`, `DECISIONS.md` | WARNING |
+| D08 | `.claude/skills/` present | WARNING |
+| D09–D14 | 6 core skills (archive, bugfix, dev, etat, review, start) | WARNING |
+| D15 | Absence de legacy `.dcbp/` | WARNING |
+| D16 | Absence de scripts legacy | WARNING |
+| D17 | Absence de skills DCBP dans `~/.claude/skills/` | WARNING |
+
+### Codes de sortie
+
+| Code | Signification |
+|------|--------------|
+| `0` | Sain — aucun probleme |
+| `1` | Avertissements — fonctionnel mais incomplet |
+| `2` | Erreurs — DCBP non initialiise ou fichiers essentiels manquants |
 
 ---
 
